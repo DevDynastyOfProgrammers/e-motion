@@ -1,15 +1,26 @@
+import math
 import pygame
-from .component import TransformComponent, RenderComponent, PlayerInputComponent
+from .component import TransformComponent, RenderComponent, PlayerInputComponent, AIComponent
 
 # Системы реализуют все поведение. Они работают с наборами компонентов.
 
-class MovementSystem:
-    # Этот метод пока пуст, но структура готова
-    def update(self, entity_manager, delta_time):
-        # Находим все сущности, у которых есть TransformComponent
-        for entity, transform in entity_manager.get_entities_with_component(TransformComponent):
-            # Здесь будет логика движения
-            pass
+class EnemyChaseSystem:
+    """Система, которая заставляет врагов с AIComponent преследовать игрока."""
+    def update(self, entity_manager, player_transform, delta_time):
+
+        if not player_transform:
+            return
+        
+        # Находим всех врагов с AIComponent и TransformComponent
+        for entity, (ai_comp, transform) in entity_manager.get_entities_with_components(AIComponent, TransformComponent):
+            dx = player_transform.x - transform.x
+            dy = player_transform.y - transform.y
+
+            alpha = math.atan2(dy, dx)
+
+            transform.x += math.cos(alpha) * transform.velocity * delta_time
+            transform.y += math.sin(alpha) * transform.velocity * delta_time
+
 
 class RenderSystem:
     def update(self, entity_manager, screen):
@@ -24,13 +35,11 @@ class RenderSystem:
             pygame.draw.rect(screen, render.color, rect)
 
 class PlayerInputSystem:
+    """Система для обработки ввода игрока и перемещения игрока."""
     def update(self, entity_manager, delta_time):
-        # Находим все сущности, у которых есть PlayerInputComponent и TransformComponent
+        # Находим всех игроков с PlayerInputComponent и TransformComponent (будет только 1)
         for entity, (input_comp, transform) in entity_manager.get_entities_with_components(PlayerInputComponent, TransformComponent):
-            keys = pygame.key.get_pressed()
-            # Используем константу скорости из settings.py, чтобы не хардкодить значения
-            # Но для этого нужно будет ее передать или импортировать
-            
+            keys = pygame.key.get_pressed()            
             # Пока что для простоты можно использовать значение из компонента
             if keys[pygame.K_a]:
                 transform.x -= transform.velocity * delta_time

@@ -1,10 +1,9 @@
-# Базовый класс для всех компонентов. По сути, просто маркер.
 class Component:
+    """Base class for all components."""
     pass
 
-# Компоненты - это просто контейнеры данных (POD - Plain Old Data)
-
 class TransformComponent(Component):
+    """Holds position, size, and velocity of an entity."""
     def __init__(self, x, y, width, height, velocity=0):
         self.x = x
         self.y = y
@@ -13,20 +12,22 @@ class TransformComponent(Component):
         self.velocity = velocity
 
 class RenderComponent(Component):
+    """Holds rendering information for an entity."""
     def __init__(self, color, layer=0):
-        self.color = color # Для PoC просто цвет, потом будет спрайт
+        self.color = color
         self.layer = layer
 
 class PlayerInputComponent(Component):
-    # Маркерный компонент, который говорит системе ввода, что эту сущность надо слушать
+    """Marker component for player-controlled entities"""
     pass
 
 class AIComponent(Component):
-    # Маркерный компонент, который говорит системе ИИ, что эту сущность надо обрабатывать
+    """Marker component for AI-controlled entities"""
     def __init__(self, ai_type="chase_player"):
         self.ai_type = ai_type
 
 class HealthComponent(Component):
+    """Holds health information for an entity."""
     def __init__(self, current_hp, max_hp):
         self.current_hp = current_hp
         self.max_hp = max_hp
