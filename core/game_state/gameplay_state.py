@@ -8,14 +8,15 @@ class GameplayState(BaseState):
         super().__init__(state_manager)
         self.entity_manager = EntityManager()
         
-        # Инициализируем системы
+        # Initialize systems
         self.render_system = RenderSystem()
         self.player_input_system = PlayerInputSystem()
         self.enemy_chase_system = EnemyChaseSystem()
         # self.ai_system = AISystem()
-        # ... другие системы
+        # ... 
 
-        # Создаем сущности (Паттерн "Фабрика" можно применить здесь в будущем)
+        # Create player and enemy entities
+        # TODO : use Factory pattern for entity creation
         self.create_player(100, 100)
         self.create_enemy(400, 300)
 
@@ -40,13 +41,11 @@ class GameplayState(BaseState):
         pass
 
     def update(self, delta_time):
-        # Обновляем все системы в определенном порядке
+        # Update all systems in a specific order
         self.player_input_system.update(self.entity_manager, delta_time)
 
         player_transform = self.entity_manager.get_component(self.player, TransformComponent)
-
         self.enemy_chase_system.update(self.entity_manager, player_transform, delta_time)
-        # self.ai_system.update(self.entity_manager, delta_time)
         
     def draw(self, screen):
         self.render_system.update(self.entity_manager, screen)

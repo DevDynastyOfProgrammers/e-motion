@@ -2,16 +2,15 @@ import math
 import pygame
 from .component import TransformComponent, RenderComponent, PlayerInputComponent, AIComponent
 
-# Системы реализуют все поведение. Они работают с наборами компонентов.
 
 class EnemyChaseSystem:
-    """Система, которая заставляет врагов с AIComponent преследовать игрока."""
+    """Processes AI-controlled enemies to chase the player"""
     def update(self, entity_manager, player_transform, delta_time):
 
         if not player_transform:
             return
         
-        # Находим всех врагов с AIComponent и TransformComponent
+        # Find all enemies with AIComponent and TransformComponent
         for entity, (ai_comp, transform) in entity_manager.get_entities_with_components(AIComponent, TransformComponent):
             dx = player_transform.x - transform.x
             dy = player_transform.y - transform.y
@@ -23,11 +22,12 @@ class EnemyChaseSystem:
 
 
 class RenderSystem:
+    """Renders all entities with TransformComponent and RenderComponent to the screen"""
     def update(self, entity_manager, screen):
-        # Очистка экрана
+        # Clear the screen
         screen.fill((20, 20, 20))
         
-        # Находим все сущности, у которых есть TransformComponent И RenderComponent
+        # Find all entities with TransformComponent and RenderComponent
         entities_to_render = entity_manager.get_entities_with_components(TransformComponent, RenderComponent)
         
         for entity, (transform, render) in entities_to_render:
@@ -35,12 +35,11 @@ class RenderSystem:
             pygame.draw.rect(screen, render.color, rect)
 
 class PlayerInputSystem:
-    """Система для обработки ввода игрока и перемещения игрока."""
+    """Processes player input and moves the player entity accordingly"""
     def update(self, entity_manager, delta_time):
-        # Находим всех игроков с PlayerInputComponent и TransformComponent (будет только 1)
+        # Find all players with PlayerInputComponent and TransformComponent (there will be only 1)
         for entity, (input_comp, transform) in entity_manager.get_entities_with_components(PlayerInputComponent, TransformComponent):
-            keys = pygame.key.get_pressed()            
-            # Пока что для простоты можно использовать значение из компонента
+            keys = pygame.key.get_pressed()
             if keys[pygame.K_a]:
                 transform.x -= transform.velocity * delta_time
             if keys[pygame.K_d]:

@@ -1,8 +1,8 @@
-# Настройки окна
+# Window settings
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 FPS = 60
 
-# Настройки игры
+# Game settings
 PLAYER_VELOCITY = 250
 ENEMY_VELOCITY = 150
