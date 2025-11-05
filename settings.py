@@ -6,3 +6,5 @@ FPS = 60
 # Game settings
 PLAYER_VELOCITY = 250
 ENEMY_VELOCITY = 150
+
+# TODO : Add more settings for entity characteristics (health, damage, spells, etc.)

@@ -1,6 +1,6 @@
 import math
 import pygame
-from .component import TransformComponent, RenderComponent, PlayerInputComponent, AIComponent
+from .component import *
 
 
 class EnemyChaseSystem:
@@ -34,6 +34,7 @@ class RenderSystem:
             rect = pygame.Rect(transform.x, transform.y, transform.width, transform.height)
             pygame.draw.rect(screen, render.color, rect)
 
+
 class PlayerInputSystem:
     """Processes player input and moves the player entity accordingly"""
     def update(self, entity_manager, delta_time):
@@ -48,3 +49,48 @@ class PlayerInputSystem:
                 transform.y -= transform.velocity * delta_time
             if keys[pygame.K_s]:
                 transform.y += transform.velocity * delta_time
+
+
+class SpellAuraSystem:
+    """Processes spell auras that damage nearby entities by targeting the tag"""
+    def update(self, entity_manager, delta_time):
+        aura_entities = entity_manager.get_entities_with_components(SpellAuraComponent, TransformComponent)
+        
+        target_entities = entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent)
+
+        for aura_entity, (aura, aura_transform) in aura_entities:
+            aura.time_since_last_tick += delta_time
+
+            if aura.time_since_last_tick < aura.tick_rate:
+                continue
+            
+            aura.time_since_last_tick = 0.0
+
+            for target_entity, (health, target_transform, tag) in target_entities:
+                print('Checking aura from entity', aura_entity, 'to target entity', target_entity)
+                # Skip non-target tags
+                if tag.tag != aura.target_tag:
+                    continue
+
+                # Distance from aura center to target
+                distance = math.hypot(
+                    aura_transform.x - target_transform.x,
+                    aura_transform.y - target_transform.y
+                )
+
+                if distance <= aura.radius:
+                    health.current_hp -= aura.damage
+                    print(f"Entity {target_entity} took {aura.damage} damage! Current HP: {health.current_hp}")
+
+
+class DeathSystem:
+    def update(self, entity_manager):
+        entities_to_remove = []
+        
+        for entity, health in entity_manager.get_entities_with_component(HealthComponent):
+            if health.current_hp <= 0:
+                entities_to_remove.append(entity)
+        
+        for entity in entities_to_remove:
+            entity_manager.remove_entity(entity)
+            print(f"Entity {entity} has died and been removed from the game.")

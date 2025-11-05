@@ -12,8 +12,8 @@ class GameplayState(BaseState):
         self.render_system = RenderSystem()
         self.player_input_system = PlayerInputSystem()
         self.enemy_chase_system = EnemyChaseSystem()
-        # self.ai_system = AISystem()
-        # ... 
+        self.spell_aura_system = SpellAuraSystem()
+        self.death_system = DeathSystem()
 
         # Create player and enemy entities
         # TODO : use Factory pattern for entity creation
@@ -27,6 +27,8 @@ class GameplayState(BaseState):
         self.entity_manager.add_component(self.player, RenderComponent(color=(0, 150, 255)))
         self.entity_manager.add_component(self.player, PlayerInputComponent())
         self.entity_manager.add_component(self.player, HealthComponent(100, 100))
+        self.entity_manager.add_component(self.player, TagComponent(tag="player"))
+        self.entity_manager.add_component(self.player, SpellAuraComponent(radius=100.0, damage=10, tick_rate=1.0, target_tag="enemy"))
 
     def create_enemy(self, x, y):
         enemy = self.entity_manager.create_entity()
@@ -35,6 +37,8 @@ class GameplayState(BaseState):
         self.entity_manager.add_component(enemy, RenderComponent(color=(255, 50, 50)))
         self.entity_manager.add_component(enemy, AIComponent())
         self.entity_manager.add_component(enemy, HealthComponent(50, 50))
+        self.entity_manager.add_component(enemy, TagComponent(tag="enemy"))
+        self.entity_manager.add_component(enemy, SpellAuraComponent(radius=50.0, damage=10, tick_rate=1.0, target_tag="player"))
 
     def handle_events(self, events):
         """event handling plug"""
@@ -46,6 +50,10 @@ class GameplayState(BaseState):
 
         player_transform = self.entity_manager.get_component(self.player, TransformComponent)
         self.enemy_chase_system.update(self.entity_manager, player_transform, delta_time)
+
+        self.spell_aura_system.update(self.entity_manager, delta_time)
+
+        self.death_system.update(self.entity_manager)
         
     def draw(self, screen):
         self.render_system.update(self.entity_manager, screen)

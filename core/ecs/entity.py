@@ -49,3 +49,9 @@ class EntityManager:
             
             if all_components_present:
                 yield entity_id, tuple(result_components)
+
+    def remove_entity(self, entity_id):
+        """Remove an entity and all its components"""
+        for component_dict in self.components.values():
+            if entity_id in component_dict:
+                del component_dict[entity_id]
