@@ -32,6 +32,7 @@ class HealthComponent(Component):
         self.current_hp = current_hp
         self.max_hp = max_hp
 
+# TODO : delete this component and use PlayerInputComponent and AIComponent for tagging
 class TagComponent(Component):
     """Marker component for tagging entities (e.g., 'enemy', 'player')"""
     def __init__(self, tag):

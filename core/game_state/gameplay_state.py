@@ -28,7 +28,7 @@ class GameplayState(BaseState):
         self.entity_manager.add_component(self.player, PlayerInputComponent())
         self.entity_manager.add_component(self.player, HealthComponent(100, 100))
         self.entity_manager.add_component(self.player, TagComponent(tag="player"))
-        self.entity_manager.add_component(self.player, SpellAuraComponent(radius=100.0, damage=10, tick_rate=1.0, target_tag="enemy"))
+        self.entity_manager.add_component(self.player, SpellAuraComponent(radius=300.0, damage=20, tick_rate=1.0, target_tag="enemy"))
 
     def create_enemy(self, x, y):
         enemy = self.entity_manager.create_entity()

@@ -56,7 +56,7 @@ class SpellAuraSystem:
     def update(self, entity_manager, delta_time):
         aura_entities = entity_manager.get_entities_with_components(SpellAuraComponent, TransformComponent)
         
-        target_entities = entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent)
+        target_entities = list(entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent))
 
         for aura_entity, (aura, aura_transform) in aura_entities:
             aura.time_since_last_tick += delta_time
@@ -67,7 +67,6 @@ class SpellAuraSystem:
             aura.time_since_last_tick = 0.0
 
             for target_entity, (health, target_transform, tag) in target_entities:
-                print('Checking aura from entity', aura_entity, 'to target entity', target_entity)
                 # Skip non-target tags
                 if tag.tag != aura.target_tag:
                     continue
