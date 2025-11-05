@@ -1,6 +1,8 @@
 import math
 import pygame
+import random
 from .component import *
+from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 class EnemyChaseSystem:
@@ -93,3 +95,36 @@ class DeathSystem:
         for entity in entities_to_remove:
             entity_manager.remove_entity(entity)
             print(f"Entity {entity} has died and been removed from the game.")
+
+
+class EnemySpawningSystem:
+    """
+    Manages the spawning of enemy waves over time.
+    Uses an EntityFactory to create enemies.
+    """
+    def __init__(self, entity_factory):
+        self.factory = entity_factory
+        self.time_since_last_spawn = 0.0
+        self.spawn_interval = 3.0 # Spawn a new enemy every 3 seconds
+
+    def update(self, delta_time):
+        self.time_since_last_spawn += delta_time
+
+        if self.time_since_last_spawn >= self.spawn_interval:
+            self.time_since_last_spawn = 0.0
+            self.spawn_enemy()
+
+    def spawn_enemy(self):
+        # Choose a random position outside the screen borders
+        side = random.randint(0, 3)
+        if side == 0: # Top
+            x, y = random.randint(0, SCREEN_WIDTH), -50
+        elif side == 1: # Right
+            x, y = SCREEN_WIDTH + 50, random.randint(0, SCREEN_HEIGHT)
+        elif side == 2: # Bottom
+            x, y = random.randint(0, SCREEN_WIDTH), SCREEN_HEIGHT + 50
+        else: # Left
+            x, y = -50, random.randint(0, SCREEN_HEIGHT)
+        
+        print(f"Spawning enemy at ({x}, {y})")
+        self.factory.create_enemy(x, y)
