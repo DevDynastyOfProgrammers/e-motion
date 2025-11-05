@@ -104,18 +104,31 @@ class EnemySpawningSystem:
     """
     def __init__(self, entity_factory):
         self.factory = entity_factory
-        self.time_since_last_spawn = 0.0
-        self.spawn_interval = 3.0 # Spawn a new enemy every 3 seconds
+        
+        # single enemy spawn parameters
+        self.time_since_last_single_spawn = 0.0
+        self.single_spawn_interval = 3.0 # Spawn a new enemy every 3 seconds
+
+        # enemy group spawn parameters
+        self.time_since_last_group_spawn = 0.0
+        self.group_spawn_interval = 10.0
+        self.group_size = 5
+        self.group_spawn_radius = 100.0
 
     def update(self, delta_time):
-        self.time_since_last_spawn += delta_time
+        # single enemy spawn processing
+        self.time_since_last_single_spawn += delta_time
+        if self.time_since_last_single_spawn >= self.single_spawn_interval:
+            self.time_since_last_single_spawn = 0.0
+            self._spawn_single_enemy()
 
-        if self.time_since_last_spawn >= self.spawn_interval:
-            self.time_since_last_spawn = 0.0
-            self.spawn_enemy()
+        # enemy group spawn processing
+        self.time_since_last_group_spawn += delta_time
+        if self.time_since_last_group_spawn >= self.group_spawn_interval:
+            self.time_since_last_group_spawn = 0.0
+            self._spawn_enemy_group()
 
-    def spawn_enemy(self):
-        # Choose a random position outside the screen borders
+    def _get_random_offscreen_position(self):
         side = random.randint(0, 3)
         if side == 0: # Top
             x, y = random.randint(0, SCREEN_WIDTH), -50
@@ -125,6 +138,24 @@ class EnemySpawningSystem:
             x, y = random.randint(0, SCREEN_WIDTH), SCREEN_HEIGHT + 50
         else: # Left
             x, y = -50, random.randint(0, SCREEN_HEIGHT)
+        return x, y
+
+    def _spawn_single_enemy(self):
+        # Choose a random position outside the screen borders
+        x, y = self._get_random_offscreen_position()
         
         print(f"Spawning enemy at ({x}, {y})")
         self.factory.create_enemy(x, y)
+
+    def _spawn_enemy_group(self):
+        """Spawns a group of enemies in a cluster at a random off-screen location."""
+        # Choose a random central position for a group outside the screen borders
+        center_x, center_y = self._get_random_offscreen_position()
+        print(f"Spawning GROUP of {self.group_size} enemies around ({center_x}, {center_y})")
+
+        # Spawning enemies in area around the center point
+        for _ in range(self.group_size):
+            offset_x = random.uniform(-self.group_spawn_radius, self.group_spawn_radius)
+            offset_y = random.uniform(-self.group_spawn_radius, self.group_spawn_radius)
+            
+            self.factory.create_enemy(center_x + offset_x, center_y + offset_y)

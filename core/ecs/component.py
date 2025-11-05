@@ -40,6 +40,7 @@ class TagComponent(Component):
 
 class SpellAuraComponent(Component):
     """Holds aura spell information for an entity"""
+    # TODO : add render and opacity
     def __init__(self, radius: float, damage: int, tick_rate: float, target_tag: str):
         self.radius = radius   
         self.damage = damage
