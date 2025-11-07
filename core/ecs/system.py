@@ -1,8 +1,13 @@
+
 import math
 import pygame
 import random
-from .component import TransformComponent, RenderComponent, PlayerInputComponent, AIComponent, HealthComponent, TagComponent, SpellAuraComponent
-from core.events import PlayerMoveIntentEvent, EntityDeathEvent
+from .component import TransformComponent, RenderComponent, PlayerInputComponent, AIComponent, \
+    HealthComponent, TagComponent, SkillSetComponent, ProjectileComponent, DamageOnCollisionComponent, LifetimeComponent
+from core.events import PlayerMoveIntentEvent, EntityDeathEvent, ApplyAreaDamageEvent, \
+    ApplyDirectDamageEvent, RequestEntityRemovalEvent, SpawnProjectileEvent, RequestSkillActivationEvent
+from core.skill_data import AreaDamageEffectData, SpawnProjectileEffectData, AutoOnCooldownTriggerData, \
+    PeriodicTriggerData
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
 
@@ -18,10 +23,12 @@ class EnemyChaseSystem:
             dx = player_transform.x - transform.x
             dy = player_transform.y - transform.y
 
-            alpha = math.atan2(dy, dx)
+            dist = math.hypot(dx, dy)
+            if dist > 0:
+                dx, dy = dx / dist, dy / dist
 
-            transform.x += math.cos(alpha) * transform.velocity * delta_time
-            transform.y += math.sin(alpha) * transform.velocity * delta_time
+            transform.x += dx * transform.velocity * delta_time
+            transform.y += dy * transform.velocity * delta_time
 
 
 class RenderSystem:
@@ -47,25 +54,16 @@ class PlayerInputSystem:
         # Find the player entity
         for entity, (input_comp, transform) in entity_manager.get_entities_with_components(PlayerInputComponent, TransformComponent):
             keys = pygame.key.get_pressed()
-            
             dx, dy = 0, 0
-            if keys[pygame.K_a]:
-                dx -= 1
-            if keys[pygame.K_d]:
-                dx += 1
-            if keys[pygame.K_w]:
-                dy -= 1
-            if keys[pygame.K_s]:
-                dy += 1
-
-            # Normalize diagonal movement
+            if keys[pygame.K_a]: dx -= 1
+            if keys[pygame.K_d]: dx += 1
+            if keys[pygame.K_w]: dy -= 1
+            if keys[pygame.K_s]: dy += 1
             if dx != 0 and dy != 0:
                 length = math.sqrt(dx**2 + dy**2)
                 dx /= length
                 dy /= length
-
             if dx != 0 or dy != 0:
-                # Post an event with the intended direction
                 self.event_manager.post(PlayerMoveIntentEvent(entity, (dx, dy)))
 
 
@@ -103,57 +101,6 @@ class MovementSystem:
         
         # Clear requests for the next frame
         self.movement_requests.clear()
-
-
-class SpellAuraSystem:
-    """Processes spell auras that damage nearby entities by targeting the tag"""
-    def update(self, entity_manager, delta_time):
-        aura_entities = entity_manager.get_entities_with_components(SpellAuraComponent, TransformComponent)
-        
-        target_entities = list(entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent))
-
-        for aura_entity, (aura, aura_transform) in aura_entities:
-            aura.time_since_last_tick += delta_time
-
-            if aura.time_since_last_tick < aura.tick_rate:
-                continue
-            
-            aura.time_since_last_tick = 0.0
-
-            for target_entity, (health, target_transform, tag) in target_entities:
-                # Skip non-target tags
-                if tag.tag != aura.target_tag:
-                    continue
-
-                # Distance from aura center to target
-                distance = math.hypot(
-                    aura_transform.x - target_transform.x,
-                    aura_transform.y - target_transform.y
-                )
-
-                if distance <= aura.radius:
-                    health.current_hp -= aura.damage
-                    print(f"Entity {target_entity} took {aura.damage} damage! Current HP: {health.current_hp}")
-
-
-class DeathSystem:
-    def __init__(self, event_manager):
-        self.event_manager = event_manager
-
-    def update(self, entity_manager):
-        entities_to_remove = []
-        
-        # TODO : combine cycles
-        for entity, health in entity_manager.get_entities_with_component(HealthComponent):
-            if health.current_hp <= 0:
-                entities_to_remove.append(entity)
-        
-        for entity in entities_to_remove:
-            entity_manager.remove_entity(entity)
-            # Post an event that an entity has died
-            self.event_manager.post(EntityDeathEvent(entity))
-            print(f"Entity {entity} has died and been removed from the game.")
-
 
 class EnemySpawningSystem:
     """
@@ -217,3 +164,234 @@ class EnemySpawningSystem:
             offset_y = random.uniform(-self.group_spawn_radius, self.group_spawn_radius)
             
             self.factory.create_enemy(center_x + offset_x, center_y + offset_y)
+
+class SkillSystem:
+    """
+    Manages skill state (cooldowns, timers) and checks trigger
+    conditions to automatically request skill activations.
+    """
+    def __init__(self, event_manager, entity_manager, skill_definitions):
+        self.event_manager = event_manager
+        self.entity_manager = entity_manager
+        self.skill_definitions = skill_definitions
+
+    def update(self, delta_time):
+        # Iterate through all entities that can use skills
+        for entity, (skill_set,) in self.entity_manager.get_entities_with_components(SkillSetComponent):
+            
+            # 1. Update all cooldowns and timers
+            for skill_id in skill_set.skills:
+                if skill_set.cooldowns[skill_id] > 0:
+                    skill_set.cooldowns[skill_id] -= delta_time
+                skill_set.periodic_timers[skill_id] += delta_time
+
+            # 2. Check all trigger conditions
+            for skill_id in skill_set.skills:
+                skill_data = self.skill_definitions.get(skill_id)
+                if not skill_data or not skill_data.trigger:
+                    continue
+
+                # Check if skill is ready (off cooldown)
+                if skill_set.cooldowns[skill_id] > 0:
+                    continue
+                
+                trigger_data = skill_data.trigger
+                should_activate = False
+
+                # Logic for different trigger types
+                if isinstance(trigger_data, AutoOnCooldownTriggerData):
+                    should_activate = True
+                
+                elif isinstance(trigger_data, PeriodicTriggerData):
+                    if skill_set.periodic_timers[skill_id] >= trigger_data.interval:
+                        should_activate = True
+
+                # If any trigger condition is met, request activation
+                if should_activate:
+                    self.event_manager.post(RequestSkillActivationEvent(entity, skill_id))
+                    # Reset periodic timer if it was a periodic activation
+                    if isinstance(trigger_data, PeriodicTriggerData):
+                        skill_set.periodic_timers[skill_id] = 0.0
+
+
+class SkillExecutionSystem:
+    """Listens for skill activation requests and executes their effects."""
+    def __init__(self, event_manager, entity_manager, skill_definitions):
+        self.event_manager = event_manager
+        self.entity_manager = entity_manager
+        self.skill_definitions = skill_definitions
+        self.event_manager.subscribe(RequestSkillActivationEvent, self.on_skill_request)
+    
+    def on_skill_request(self, event):
+        skill_set = self.entity_manager.get_component(event.entity_id, SkillSetComponent)
+        transform = self.entity_manager.get_component(event.entity_id, TransformComponent)
+        skill_data = self.skill_definitions.get(event.skill_id)
+
+        if not all([skill_set, transform, skill_data]):
+            return
+        
+        # Check cooldown
+        if skill_set.cooldowns.get(event.skill_id, 0) > 0:
+            return # Skill is on cooldown
+        
+        # Set cooldown
+        skill_set.cooldowns[event.skill_id] = skill_data.cooldown
+
+        # Execute effects
+        print(f"Executing skill '{skill_data.skill_id}' for entity {event.entity_id}")
+        for effect in skill_data.effects:
+            if isinstance(effect, AreaDamageEffectData):
+                self.event_manager.post(ApplyAreaDamageEvent(
+                    caster_id=event.entity_id,
+                    caster_pos=(transform.x, transform.y),
+                    effect_data=effect
+                ))
+            elif isinstance(effect, SpawnProjectileEffectData):
+                self.event_manager.post(SpawnProjectileEvent(
+                    caster_id=event.entity_id,
+                    effect_data=effect
+                ))
+
+
+class DamageSystem:
+    """Listens for damage events and applies them."""
+    def __init__(self, event_manager, entity_manager):
+        self.event_manager = event_manager
+        self.entity_manager = entity_manager
+        self.event_manager.subscribe(ApplyAreaDamageEvent, self.on_area_damage)
+        self.event_manager.subscribe(ApplyDirectDamageEvent, self.on_direct_damage)
+
+    def on_area_damage(self, event):
+        """Applies damage to all valid targets in a radius."""
+        effect_data = event.effect_data
+        caster_pos = event.caster_pos
+        target_entities = self.entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent)
+
+        for target_id, (health, transform, tag) in target_entities:
+            if target_id == event.caster_id: continue
+            if tag.tag == effect_data.target_tag:
+                distance = math.hypot(caster_pos[0] - transform.x, caster_pos[1] - transform.y)
+                if distance <= effect_data.radius:
+                    health.current_hp -= effect_data.damage
+                    print(f"Entity {target_id} took {effect_data.damage} AREA damage! HP: {health.current_hp}")
+    
+    def on_direct_damage(self, event):
+        """Applies damage to a single specific target."""
+        health = self.entity_manager.get_component(event.target_id, HealthComponent)
+        if health:
+            health.current_hp -= event.damage
+            print(f"Entity {event.target_id} took {event.damage} DIRECT damage! HP: {health.current_hp}")
+
+
+class DeathSystem:
+    """Manages entity death and removal based on health or requests."""
+    def __init__(self, event_manager, entity_manager):
+        self.event_manager = event_manager
+        self.entity_manager = entity_manager
+        self.event_manager.subscribe(RequestEntityRemovalEvent, self.on_removal_request)
+    
+    def on_removal_request(self, event):
+        """Handles explicit requests to remove an entity."""
+        if self.entity_manager.remove_entity(event.entity_id):
+            # print(f"Entity {event.entity_id} was removed by request.")
+            pass
+
+    def update(self):
+        """Checks for entities with zero or less health."""
+        entities_to_remove = []
+        for entity, health in self.entity_manager.get_entities_with_component(HealthComponent):
+            if health.current_hp <= 0:
+                entities_to_remove.append(entity)
+        
+        for entity in entities_to_remove:
+            if self.entity_manager.remove_entity(entity):
+                self.event_manager.post(EntityDeathEvent(entity))
+                print(f"Entity {entity} has DIED and been removed from the game.")
+
+class ProjectileSpawningSystem:
+    """Listens for SpawnProjectileEvent and creates projectiles."""
+    def __init__(self, event_manager, entity_manager, projectile_definitions, factory):
+        self.event_manager = event_manager
+        self.entity_manager = entity_manager
+        self.projectile_definitions = projectile_definitions
+        self.factory = factory
+        self.event_manager.subscribe(SpawnProjectileEvent, self.on_spawn_projectile)
+    
+    def on_spawn_projectile(self, event):
+        caster_transform = self.entity_manager.get_component(event.caster_id, TransformComponent)
+        if not caster_transform: return
+        
+        projectile_data = self.projectile_definitions.get(event.effect_data.projectile_id)
+        if not projectile_data:
+            print(f"ERROR: Unknown projectile_id '{event.effect_data.projectile_id}'")
+            return
+        
+        # --- Targeting Logic ---
+        direction = (1, 0) # Default direction (right)
+        if event.effect_data.target_logic == "nearest_enemy":
+            target = self._find_nearest_enemy(caster_transform.x, caster_transform.y)
+            if target:
+                target_transform = self.entity_manager.get_component(target, TransformComponent)
+                dx = target_transform.x - caster_transform.x
+                dy = target_transform.y - caster_transform.y
+                dist = math.hypot(dx, dy)
+                if dist > 0:
+                    direction = (dx / dist, dy / dist)
+        
+        self.factory.create_projectile(caster_transform.x, caster_transform.y, direction, projectile_data)
+
+    def _find_nearest_enemy(self, x, y):
+        """Finds the entity with an AIComponent closest to the given point."""
+        # This is O(N) and not optimal, but fine for now.
+        enemies = self.entity_manager.get_entities_with_components(AIComponent, TransformComponent)
+        closest_enemy = None
+        min_dist_sq = float('inf')
+
+        for enemy_id, (ai, transform) in enemies:
+            dist_sq = (transform.x - x)**2 + (transform.y - y)**2
+            if dist_sq < min_dist_sq:
+                min_dist_sq = dist_sq
+                closest_enemy = enemy_id
+        return closest_enemy
+
+
+class ProjectileMovementSystem:
+    """Moves all entities with a ProjectileComponent."""
+    def update(self, entity_manager, delta_time):
+        for entity, (proj, transform) in entity_manager.get_entities_with_components(ProjectileComponent, TransformComponent):
+            transform.x += proj.dx * transform.velocity * delta_time
+            transform.y += proj.dy * transform.velocity * delta_time
+
+class ProjectileImpactSystem:
+    """Checks for projectile collisions and posts damage events."""
+    def __init__(self, event_manager, entity_manager):
+        self.event_manager = event_manager
+        self.entity_manager = entity_manager
+
+    def update(self):
+        projectiles = list(self.entity_manager.get_entities_with_components(ProjectileComponent, TransformComponent, DamageOnCollisionComponent))
+        targets = list(self.entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent))
+
+        for proj_id, (proj, proj_trans, proj_damage) in projectiles:
+            for target_id, (health, target_trans, tag) in targets:
+                if tag.tag != proj_damage.target_tag:
+                    continue
+
+                # Simple radius-based collision check
+                if math.hypot(proj_trans.x - target_trans.x, proj_trans.y - target_trans.y) < target_trans.width:
+                    self.event_manager.post(ApplyDirectDamageEvent(target_id, proj_damage.damage))
+                    # Destroy projectile on impact
+                    self.event_manager.post(RequestEntityRemovalEvent(proj_id))
+                    break # Projectile can only hit one target
+
+class LifetimeSystem:
+    """Decrements lifetime on components and removes entities when it expires."""
+    def __init__(self, event_manager, entity_manager):
+        self.event_manager = event_manager
+        self.entity_manager = entity_manager
+        
+    def update(self, delta_time):
+        for entity, (lifetime,) in self.entity_manager.get_entities_with_components(LifetimeComponent):
+            lifetime.time_remaining -= delta_time
+            if lifetime.time_remaining <= 0:
+                self.event_manager.post(RequestEntityRemovalEvent(entity))

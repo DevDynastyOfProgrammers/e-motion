@@ -1,3 +1,5 @@
+from core.skill_data import AnyEffectData
+
 class Event:
     """
     Base class for all events.
@@ -18,5 +20,38 @@ class PlayerMoveIntentEvent(Event):
     """
     def __init__(self, entity_id, direction):
         self.entity_id = entity_id
-        # A tuple like (dx, dy), e.g., (1, 0) for right
         self.direction = direction
+
+class RequestSkillActivationEvent(Event):
+    """Broadcast when an entity wants to activate a skill."""
+    def __init__(self, entity_id, skill_id):
+        self.entity_id = entity_id
+        self.skill_id = skill_id
+
+# --- Skill Effect Events ---
+
+class ApplyAreaDamageEvent(Event):
+    """Broadcast to apply area damage."""
+    def __init__(self, caster_id, caster_pos, effect_data):
+        self.caster_id = caster_id
+        self.caster_pos = caster_pos
+        self.effect_data: AnyEffectData = effect_data
+
+class SpawnProjectileEvent(Event):
+    """Broadcast to spawn a projectile."""
+    def __init__(self, caster_id, effect_data):
+        self.caster_id = caster_id
+        self.effect_data: AnyEffectData = effect_data
+
+# --- Damage & Removal Events ---
+
+class ApplyDirectDamageEvent(Event):
+    """Broadcast to apply damage to a single, specific entity."""
+    def __init__(self, target_id, damage):
+        self.target_id = target_id
+        self.damage = damage
+
+class RequestEntityRemovalEvent(Event):
+    """Broadcast to request the removal of an entity (e.g., a projectile)."""
+    def __init__(self, entity_id):
+        self.entity_id = entity_id

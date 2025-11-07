@@ -32,18 +32,41 @@ class HealthComponent(Component):
         self.current_hp = current_hp
         self.max_hp = max_hp
 
-# TODO : delete this component and use PlayerInputComponent and AIComponent for tagging
 class TagComponent(Component):
     """Marker component for tagging entities (e.g., 'enemy', 'player')"""
     def __init__(self, tag):
         self.tag = tag
 
-class SpellAuraComponent(Component):
-    """Holds aura spell information for an entity"""
-    # TODO : add render and opacity
-    def __init__(self, radius: float, damage: int, tick_rate: float, target_tag: str):
-        self.radius = radius   
+class SkillSetComponent(Component):
+    """Holds the runtime state of an entity's skills."""
+    def __init__(self, skill_ids: list):
+        self.skills = skill_ids
+        
+        # Tracks the current cooldown for each skill.
+        self.cooldowns = {skill_id: 0.0 for skill_id in skill_ids}
+
+        # Tracks individual timers for periodic triggers.
+        self.periodic_timers = {skill_id: 0.0 for skill_id in skill_ids}
+
+class ProjectileComponent(Component):
+    """
+    Marker component for projectiles. Stores its movement direction.
+    """
+    def __init__(self, direction_x, direction_y):
+        self.dx = direction_x
+        self.dy = direction_y
+
+class DamageOnCollisionComponent(Component):
+    """
+    Data component for entities that deal damage on collision (like projectiles).
+    """
+    def __init__(self, damage: int, target_tag: str):
         self.damage = damage
-        self.tick_rate = tick_rate
-        self.target_tag = target_tag # Target to attack
-        self.time_since_last_tick = 0.0
+        self.target_tag = target_tag
+
+class LifetimeComponent(Component):
+    """
+    Gives an entity a limited time to live.
+    """
+    def __init__(self, duration: float):
+        self.time_remaining = duration
