@@ -25,7 +25,7 @@ class EntityManager:
         """Get an entity and their component of a specific type"""
         if component_type in self.components:
             return self.components[component_type].items()
-        return {}.items() # Возвращаем пустой итератор
+        return {}.items() # Returns an empty iterator
 
     def get_entities_with_components(self, *component_types):
         """A generator that returns the entity ID and a tuple of its components 

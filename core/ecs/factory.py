@@ -1,4 +1,4 @@
-from .component import *
+from .component import TransformComponent, RenderComponent, PlayerInputComponent, AIComponent, HealthComponent, TagComponent, SpellAuraComponent
 
 class EntityFactory:
     """

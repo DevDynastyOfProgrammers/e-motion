@@ -1,7 +1,8 @@
 import math
 import pygame
 import random
-from .component import *
+from .component import TransformComponent, RenderComponent, PlayerInputComponent, AIComponent, HealthComponent, TagComponent, SpellAuraComponent
+from core.events import PlayerMoveIntentEvent, EntityDeathEvent
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
 
@@ -38,19 +39,70 @@ class RenderSystem:
 
 
 class PlayerInputSystem:
-    """Processes player input and moves the player entity accordingly"""
-    def update(self, entity_manager, delta_time):
-        # Find all players with PlayerInputComponent and TransformComponent (there will be only 1)
+    """Processes player input and posts movement intent events."""
+    def __init__(self, event_manager):
+        self.event_manager = event_manager
+
+    def update(self, entity_manager):
+        # Find the player entity
         for entity, (input_comp, transform) in entity_manager.get_entities_with_components(PlayerInputComponent, TransformComponent):
             keys = pygame.key.get_pressed()
+            
+            dx, dy = 0, 0
             if keys[pygame.K_a]:
-                transform.x -= transform.velocity * delta_time
+                dx -= 1
             if keys[pygame.K_d]:
-                transform.x += transform.velocity * delta_time
+                dx += 1
             if keys[pygame.K_w]:
-                transform.y -= transform.velocity * delta_time
+                dy -= 1
             if keys[pygame.K_s]:
-                transform.y += transform.velocity * delta_time
+                dy += 1
+
+            # Normalize diagonal movement
+            if dx != 0 and dy != 0:
+                length = math.sqrt(dx**2 + dy**2)
+                dx /= length
+                dy /= length
+
+            if dx != 0 or dy != 0:
+                # Post an event with the intended direction
+                self.event_manager.post(PlayerMoveIntentEvent(entity, (dx, dy)))
+
+
+class MovementSystem:
+    """
+    Handles movement requests and updates TransformComponents.
+    This system will be expanded to handle all physics-based movement.
+    """
+    def __init__(self, event_manager, entity_manager):
+        self.event_manager = event_manager
+        self.entity_manager = entity_manager
+        
+        # Subscribe to movement events
+        self.event_manager.subscribe(PlayerMoveIntentEvent, self.on_player_move)
+
+        # A dictionary to store movement requests for the current frame
+        self.movement_requests = {}
+
+    def on_player_move(self, event):
+        """
+        Callback that receives PlayerMoveIntentEvent.
+        Stores the movement direction for processing in the update phase.
+        """
+        self.movement_requests[event.entity_id] = event.direction
+
+    def update(self, delta_time):
+        """
+        Apply the stored movement requests to the entities' TransformComponents.
+        """
+        for entity_id, direction in self.movement_requests.items():
+            transform = self.entity_manager.get_component(entity_id, TransformComponent)
+            if transform:
+                transform.x += direction[0] * transform.velocity * delta_time
+                transform.y += direction[1] * transform.velocity * delta_time
+        
+        # Clear requests for the next frame
+        self.movement_requests.clear()
 
 
 class SpellAuraSystem:
@@ -85,15 +137,21 @@ class SpellAuraSystem:
 
 
 class DeathSystem:
+    def __init__(self, event_manager):
+        self.event_manager = event_manager
+
     def update(self, entity_manager):
         entities_to_remove = []
         
+        # TODO : combine cycles
         for entity, health in entity_manager.get_entities_with_component(HealthComponent):
             if health.current_hp <= 0:
                 entities_to_remove.append(entity)
         
         for entity in entities_to_remove:
             entity_manager.remove_entity(entity)
+            # Post an event that an entity has died
+            self.event_manager.post(EntityDeathEvent(entity))
             print(f"Entity {entity} has died and been removed from the game.")
 
 
