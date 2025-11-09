@@ -1,4 +1,3 @@
-
 import math
 import pygame
 import random
@@ -10,13 +9,20 @@ from core.skill_data import AreaDamageEffectData, SpawnProjectileEffectData, Aut
     PeriodicTriggerData
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
-
+# TODO : Transfer the transfer logic of enemies to MovementSystem
 class EnemyChaseSystem:
     """Processes AI-controlled enemies to chase the player"""
+    def __init__(self, director):
+        # The system now depends on the director for speed modulation.
+        self.director = director
+
     def update(self, entity_manager, player_transform, delta_time):
 
         if not player_transform:
             return
+            
+        # Get the current speed multiplier from the director.
+        speed_multiplier = self.director.get_enemy_speed_multiplier()
         
         # Find all enemies with AIComponent and TransformComponent
         for entity, (ai_comp, transform) in entity_manager.get_entities_with_components(AIComponent, TransformComponent):
@@ -27,8 +33,9 @@ class EnemyChaseSystem:
             if dist > 0:
                 dx, dy = dx / dist, dy / dist
 
-            transform.x += dx * transform.velocity * delta_time
-            transform.y += dy * transform.velocity * delta_time
+            # Apply the speed multiplier here.
+            transform.x += dx * transform.velocity * speed_multiplier * delta_time
+            transform.y += dy * transform.velocity * speed_multiplier * delta_time
 
 
 class RenderSystem:
@@ -70,66 +77,73 @@ class PlayerInputSystem:
 class MovementSystem:
     """
     Handles movement requests and updates TransformComponents.
-    This system will be expanded to handle all physics-based movement.
     """
-    def __init__(self, event_manager, entity_manager):
+    def __init__(self, event_manager, entity_manager, director):
         self.event_manager = event_manager
         self.entity_manager = entity_manager
+        self.director = director # The system now depends on the director
         
-        # Subscribe to movement events
         self.event_manager.subscribe(PlayerMoveIntentEvent, self.on_player_move)
-
-        # A dictionary to store movement requests for the current frame
         self.movement_requests = {}
 
     def on_player_move(self, event):
-        """
-        Callback that receives PlayerMoveIntentEvent.
-        Stores the movement direction for processing in the update phase.
-        """
+        """Callback that receives PlayerMoveIntentEvent."""
         self.movement_requests[event.entity_id] = event.direction
 
     def update(self, delta_time):
-        """
-        Apply the stored movement requests to the entities' TransformComponents.
-        """
+        """Apply the stored movement requests to the entities' TransformComponents."""
         for entity_id, direction in self.movement_requests.items():
             transform = self.entity_manager.get_component(entity_id, TransformComponent)
             if transform:
-                transform.x += direction[0] * transform.velocity * delta_time
-                transform.y += direction[1] * transform.velocity * delta_time
+                speed_multiplier = 1.0
+                # Check if the moving entity is the player to apply the multiplier
+                if self.entity_manager.get_component(entity_id, PlayerInputComponent):
+                    speed_multiplier = self.director.get_player_speed_multiplier()
+
+                # Apply the speed multiplier
+                transform.x += direction[0] * transform.velocity * speed_multiplier * delta_time
+                transform.y += direction[1] * transform.velocity * speed_multiplier * delta_time
         
-        # Clear requests for the next frame
         self.movement_requests.clear()
 
 class EnemySpawningSystem:
     """
     Manages the spawning of enemy waves over time.
-    Uses an EntityFactory to create enemies.
     """
-    def __init__(self, entity_factory):
+    def __init__(self, entity_factory, director):
         self.factory = entity_factory
+        self.director = director
         
-        # single enemy spawn parameters
+        # Store base values for intervals. The director will modify these.
         self.time_since_last_single_spawn = 0.0
-        self.single_spawn_interval = 3.0 # Spawn a new enemy every 3 seconds
+        self.base_single_spawn_interval = 3.0
 
-        # enemy group spawn parameters
         self.time_since_last_group_spawn = 0.0
-        self.group_spawn_interval = 10.0
+        self.base_group_spawn_interval = 10.0
         self.group_size = 5
         self.group_spawn_radius = 100.0
 
     def update(self, delta_time):
+        # Get the current spawn rate multiplier from the director.
+        spawn_rate_multiplier = self.director.get_spawn_rate_multiplier()
+        # A multiplier of 0 could lead to division by zero, so we clamp it.
+        if spawn_rate_multiplier <= 0:
+            spawn_rate_multiplier = 0.001 # Effectively stops spawning
+
+        # Calculate current intervals based on the director's multiplier.
+        # Higher multiplier -> lower interval -> more frequent spawning.
+        current_single_interval = self.base_single_spawn_interval / spawn_rate_multiplier
+        current_group_interval = self.base_group_spawn_interval / spawn_rate_multiplier
+
         # single enemy spawn processing
         self.time_since_last_single_spawn += delta_time
-        if self.time_since_last_single_spawn >= self.single_spawn_interval:
+        if self.time_since_last_single_spawn >= current_single_interval:
             self.time_since_last_single_spawn = 0.0
             self._spawn_single_enemy()
 
         # enemy group spawn processing
         self.time_since_last_group_spawn += delta_time
-        if self.time_since_last_group_spawn >= self.group_spawn_interval:
+        if self.time_since_last_group_spawn >= current_group_interval:
             self.time_since_last_group_spawn = 0.0
             self._spawn_enemy_group()
 
@@ -146,23 +160,16 @@ class EnemySpawningSystem:
         return x, y
 
     def _spawn_single_enemy(self):
-        # Choose a random position outside the screen borders
         x, y = self._get_random_offscreen_position()
-        
         print(f"Spawning enemy at ({x}, {y})")
         self.factory.create_enemy(x, y)
 
     def _spawn_enemy_group(self):
-        """Spawns a group of enemies in a cluster at a random off-screen location."""
-        # Choose a random central position for a group outside the screen borders
         center_x, center_y = self._get_random_offscreen_position()
         print(f"Spawning GROUP of {self.group_size} enemies around ({center_x}, {center_y})")
-
-        # Spawning enemies in area around the center point
         for _ in range(self.group_size):
             offset_x = random.uniform(-self.group_spawn_radius, self.group_spawn_radius)
             offset_y = random.uniform(-self.group_spawn_radius, self.group_spawn_radius)
-            
             self.factory.create_enemy(center_x + offset_x, center_y + offset_y)
 
 class SkillSystem:

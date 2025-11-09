@@ -3,9 +3,10 @@ from core.ecs.entity import EntityManager
 from core.ecs.factory import EntityFactory
 from core.ecs.system import RenderSystem, PlayerInputSystem, MovementSystem, EnemySpawningSystem, EnemyChaseSystem, DeathSystem, \
     SkillSystem, SkillExecutionSystem, DamageSystem, ProjectileSpawningSystem, ProjectileMovementSystem, ProjectileImpactSystem, LifetimeSystem
-from core.ecs.component import TransformComponent
+from core.ecs.component import TransformComponent, PlayerInputComponent
 from core.event_manager import EventManager
 from core.data_loader import DataLoader
+from core.director import GameDirector
 
 class GameplayState(BaseState):
     def __init__(self, state_manager):
@@ -13,6 +14,7 @@ class GameplayState(BaseState):
         
         self.entity_manager = EntityManager()
         self.event_manager = EventManager()
+        self.director = GameDirector() # Create the Director
         data_loader = DataLoader()
         self.skill_definitions, self.projectile_definitions = data_loader.load_game_data("skills.yaml")
         self.entity_factory = EntityFactory(self.entity_manager)
@@ -20,9 +22,11 @@ class GameplayState(BaseState):
         # --- System Initialization ---
         self.render_system = RenderSystem()
         self.player_input_system = PlayerInputSystem(self.event_manager)
-        self.movement_system = MovementSystem(self.event_manager, self.entity_manager)
-        self.enemy_spawning_system = EnemySpawningSystem(self.entity_factory)
-        self.enemy_chase_system = EnemyChaseSystem()
+        # Pass the director to systems that need it
+        self.movement_system = MovementSystem(self.event_manager, self.entity_manager, self.director)
+        self.enemy_spawning_system = EnemySpawningSystem(self.entity_factory, self.director)
+        self.enemy_chase_system = EnemyChaseSystem(self.director)
+
         self.death_system = DeathSystem(self.event_manager, self.entity_manager)
         self.skill_system = SkillSystem(self.event_manager, self.entity_manager, self.skill_definitions)
         self.skill_execution_system = SkillExecutionSystem(self.event_manager, self.entity_manager, self.skill_definitions)
@@ -33,12 +37,20 @@ class GameplayState(BaseState):
         self.lifetime_system = LifetimeSystem(self.event_manager, self.entity_manager)
         
         self.player = self.entity_factory.create_player(300, 300)
+        
+        # TODO : Change this temporary code to model integration
+        # --- Proof of Concept: Simulate receiving a new vector ---
+        # In a real scenario, this would be called by the EmotionIntegrationSystem
+        # enemies spawn rate - x2, enemy speed - x1.5, player speed - x1.3
+        self.director.set_new_target_vector([2.0, 1.5, 1.3])
 
     def handle_events(self, events):
         """event handling plug"""
         pass
 
     def update(self, delta_time):
+        self.director.update(delta_time)
+        
         self.player_input_system.update(self.entity_manager)
         self.skill_system.update(delta_time)
 

@@ -24,8 +24,8 @@ PlayerAura:
     interval: 1.0   # cooldown in seconds
   effects:
     - type: AREA_DAMAGE
-      radius: 100
-      damage: 10
+      radius: 200
+      damage: 15
       target_tag: "enemy"
 
 Fireball:
