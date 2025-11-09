@@ -47,7 +47,8 @@ class SpawnProjectileEvent(Event):
 
 class ApplyDirectDamageEvent(Event):
     """Broadcast to apply damage to a single, specific entity."""
-    def __init__(self, target_id, damage):
+    def __init__(self, caster_id, target_id, damage):
+        self.caster_id = caster_id # ID to identify the damage source
         self.target_id = target_id
         self.damage = damage
 

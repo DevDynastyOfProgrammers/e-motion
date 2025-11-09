@@ -261,33 +261,53 @@ class SkillExecutionSystem:
 
 
 class DamageSystem:
-    """Listens for damage events and applies them."""
-    def __init__(self, event_manager, entity_manager):
+    """Listens for damage events and applies them, considering multipliers."""
+    def __init__(self, event_manager, entity_manager, director):
         self.event_manager = event_manager
         self.entity_manager = entity_manager
+        self.director = director
         self.event_manager.subscribe(ApplyAreaDamageEvent, self.on_area_damage)
         self.event_manager.subscribe(ApplyDirectDamageEvent, self.on_direct_damage)
+
+    def _get_damage_multiplier(self, caster_id: int) -> float:
+        """Determines if the caster is a player or enemy and returns the correct multiplier."""
+        if self.entity_manager.get_component(caster_id, PlayerInputComponent):
+            return self.director.get_player_damage_multiplier()
+        elif self.entity_manager.get_component(caster_id, AIComponent):
+            return self.director.get_enemy_damage_multiplier()
+        return 1.0 # Default for neutral sources
 
     def on_area_damage(self, event):
         """Applies damage to all valid targets in a radius."""
         effect_data = event.effect_data
         caster_pos = event.caster_pos
-        target_entities = self.entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent)
+        
+        # Damage formula
+        base_damage = effect_data.damage
+        multiplier = self._get_damage_multiplier(event.caster_id)
+        final_damage = int(base_damage * multiplier)
+        if final_damage <= 0: return
 
+        target_entities = self.entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent)
         for target_id, (health, transform, tag) in target_entities:
             if target_id == event.caster_id: continue
             if tag.tag == effect_data.target_tag:
                 distance = math.hypot(caster_pos[0] - transform.x, caster_pos[1] - transform.y)
                 if distance <= effect_data.radius:
-                    health.current_hp -= effect_data.damage
-                    print(f"Entity {target_id} took {effect_data.damage} AREA damage! HP: {health.current_hp}")
+                    health.current_hp -= final_damage
+                    print(f"Entity {target_id} took {final_damage} AREA damage! HP: {health.current_hp}")
     
     def on_direct_damage(self, event):
         """Applies damage to a single specific target."""
         health = self.entity_manager.get_component(event.target_id, HealthComponent)
         if health:
-            health.current_hp -= event.damage
-            print(f"Entity {event.target_id} took {event.damage} DIRECT damage! HP: {health.current_hp}")
+            base_damage = event.damage
+            multiplier = self._get_damage_multiplier(event.caster_id)
+            final_damage = int(base_damage * multiplier)
+            if final_damage <= 0: return
+
+            health.current_hp -= final_damage
+            print(f"Entity {event.target_id} took {final_damage} DIRECT damage! HP: {health.current_hp}")
 
 
 class DeathSystem:
@@ -345,7 +365,8 @@ class ProjectileSpawningSystem:
                 if dist > 0:
                     direction = (dx / dist, dy / dist)
         
-        self.factory.create_projectile(caster_transform.x, caster_transform.y, direction, projectile_data)
+        # Pass the caster_id to the factory
+        self.factory.create_projectile(event.caster_id, caster_transform.x, caster_transform.y, direction, projectile_data)
 
     def _find_nearest_enemy(self, x, y):
         """Finds the entity with an AIComponent closest to the given point."""
@@ -386,10 +407,10 @@ class ProjectileImpactSystem:
 
                 # Simple radius-based collision check
                 if math.hypot(proj_trans.x - target_trans.x, proj_trans.y - target_trans.y) < target_trans.width:
-                    self.event_manager.post(ApplyDirectDamageEvent(target_id, proj_damage.damage))
-                    # Destroy projectile on impact
+                    # Pass the projectile's caster_id in the event
+                    self.event_manager.post(ApplyDirectDamageEvent(proj.caster_id, target_id, proj_damage.damage))
                     self.event_manager.post(RequestEntityRemovalEvent(proj_id))
-                    break # Projectile can only hit one target
+                    break
 
 class LifetimeSystem:
     """Decrements lifetime on components and removes entities when it expires."""

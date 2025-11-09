@@ -50,11 +50,12 @@ class SkillSetComponent(Component):
 
 class ProjectileComponent(Component):
     """
-    Marker component for projectiles. Stores its movement direction.
+    Marker component for projectiles. Stores its movement direction and caster.
     """
-    def __init__(self, direction_x, direction_y):
+    def __init__(self, direction_x, direction_y, caster_id):
         self.dx = direction_x
         self.dy = direction_y
+        self.caster_id = caster_id # ID to trace damage source
 
 class DamageOnCollisionComponent(Component):
     """

@@ -1,5 +1,3 @@
-# core/director.py
-
 from enum import IntEnum
 from typing import List
 from core.utils.lerp import lerp
@@ -8,14 +6,15 @@ class GameStateVector(IntEnum):
     """
     Defines the fixed indices for parameters within the game state vector.
     This ensures type-safe and readable access to vector elements.
+    The order matches the MVP specification.
     """
     SPAWN_RATE_MULTIPLIER = 0
     ENEMY_SPEED_MULTIPLIER = 1
-    PLAYER_SPEED_MULTIPLIER = 2
-    # --- Future MVP parameters can be added here ---
-    # ENEMY_HEALTH_MULTIPLIER = 3
-    # ENEMY_DAMAGE_MULTIPLIER = 4
-    # etc.
+    ENEMY_HEALTH_MULTIPLIER = 2
+    ENEMY_DAMAGE_MULTIPLIER = 3
+    PLAYER_SPEED_MULTIPLIER = 4
+    PLAYER_DAMAGE_MULTIPLIER = 5
+    ITEM_DROP_CHANCE_MODIFIER = 6
 
 class GameDirector:
     """
@@ -30,17 +29,15 @@ class GameDirector:
         :param smoothing_factor: How quickly the current state approaches the
                                  target state. Higher is faster.
         """
-        # For the PoC, the vector has a fixed size of 3.
-        # [spawn_rate, enemy_speed, player_speed]
-        self._poc_vector_size = 3
+        # The vector now has a fixed size of 7 for the MVP.
+        self._vector_size = len(GameStateVector)
         
         # The state currently being used by game systems.
         # Defaults to a neutral state (all multipliers are 1.0).
-        self._current_state_vector: List[float] = [1.0] * self._poc_vector_size
+        self._current_state_vector: List[float] = [1.0] * self._vector_size
         
         # The target state received from the ML model.
-        # Also defaults to neutral.
-        self._target_state_vector: List[float] = [1.0] * self._poc_vector_size
+        self._target_state_vector: List[float] = [1.0] * self._vector_size
         
         self._smoothing_factor = smoothing_factor
 
@@ -61,23 +58,32 @@ class GameDirector:
         Sets a new target state vector, typically received from the ML model.
         Performs validation to ensure the vector has the correct dimensions.
         """
-        if len(vector) == self._poc_vector_size:
+        if len(vector) == self._vector_size:
             print(f"Director received new target vector: {vector}")
             self._target_state_vector = vector
         else:
             print(f"WARNING: GameDirector received a vector of invalid size. "
-                  f"Expected {self._poc_vector_size}, got {len(vector)}.")
+                  f"Expected {self._vector_size}, got {len(vector)}.")
 
     # --- Public Getters for Systems ---
 
     def get_spawn_rate_multiplier(self) -> float:
-        """Returns the current, interpolated spawn rate multiplier."""
         return self._current_state_vector[GameStateVector.SPAWN_RATE_MULTIPLIER]
 
     def get_enemy_speed_multiplier(self) -> float:
-        """Returns the current, interpolated enemy speed multiplier."""
         return self._current_state_vector[GameStateVector.ENEMY_SPEED_MULTIPLIER]
 
+    def get_enemy_health_multiplier(self) -> float:
+        return self._current_state_vector[GameStateVector.ENEMY_HEALTH_MULTIPLIER]
+    
+    def get_enemy_damage_multiplier(self) -> float:
+        return self._current_state_vector[GameStateVector.ENEMY_DAMAGE_MULTIPLIER]
+
     def get_player_speed_multiplier(self) -> float:
-        """Returns the current, interpolated player speed multiplier."""
         return self._current_state_vector[GameStateVector.PLAYER_SPEED_MULTIPLIER]
+
+    def get_player_damage_multiplier(self) -> float:
+        return self._current_state_vector[GameStateVector.PLAYER_DAMAGE_MULTIPLIER]
+
+    def get_item_drop_chance_modifier(self) -> float:
+        return self._current_state_vector[GameStateVector.ITEM_DROP_CHANCE_MODIFIER]

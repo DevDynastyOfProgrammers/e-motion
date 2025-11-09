@@ -14,23 +14,23 @@ class GameplayState(BaseState):
         
         self.entity_manager = EntityManager()
         self.event_manager = EventManager()
-        self.director = GameDirector() # Create the Director
+        self.director = GameDirector()
         data_loader = DataLoader()
         self.skill_definitions, self.projectile_definitions = data_loader.load_game_data("skills.yaml")
-        self.entity_factory = EntityFactory(self.entity_manager)
+        # Pass director to factory
+        self.entity_factory = EntityFactory(self.entity_manager, self.director) 
         
-        # --- System Initialization ---
+        # --- System Initialization (with Director injection) ---
         self.render_system = RenderSystem()
         self.player_input_system = PlayerInputSystem(self.event_manager)
-        # Pass the director to systems that need it
         self.movement_system = MovementSystem(self.event_manager, self.entity_manager, self.director)
         self.enemy_spawning_system = EnemySpawningSystem(self.entity_factory, self.director)
         self.enemy_chase_system = EnemyChaseSystem(self.director)
-
         self.death_system = DeathSystem(self.event_manager, self.entity_manager)
         self.skill_system = SkillSystem(self.event_manager, self.entity_manager, self.skill_definitions)
         self.skill_execution_system = SkillExecutionSystem(self.event_manager, self.entity_manager, self.skill_definitions)
-        self.damage_system = DamageSystem(self.event_manager, self.entity_manager)
+        # Pass director to DamageSystem
+        self.damage_system = DamageSystem(self.event_manager, self.entity_manager, self.director)
         self.projectile_spawning_system = ProjectileSpawningSystem(self.event_manager, self.entity_manager, self.projectile_definitions, self.entity_factory)
         self.projectile_movement_system = ProjectileMovementSystem()
         self.projectile_impact_system = ProjectileImpactSystem(self.event_manager, self.entity_manager)
@@ -38,11 +38,10 @@ class GameplayState(BaseState):
         
         self.player = self.entity_factory.create_player(300, 300)
         
+        # --- Proof of Concept: Simulate receiving a full MVP vector ---
         # TODO : Change this temporary code to model integration
-        # --- Proof of Concept: Simulate receiving a new vector ---
-        # In a real scenario, this would be called by the EmotionIntegrationSystem
-        # enemies spawn rate - x2, enemy speed - x1.5, player speed - x1.3
-        self.director.set_new_target_vector([2.0, 1.5, 1.3])
+        # [spawn, enemy_spd, enemy_hp, enemy_dmg, player_spd, player_dmg, item_drop]
+        self.director.set_new_target_vector([2.0, 1.5, 2.5, 2.0, 1.4, 1.5, 1.0])
 
     def handle_events(self, events):
         """event handling plug"""
