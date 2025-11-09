@@ -1,12 +1,10 @@
-# core/game_state/gameplay_state.py
-
 from .base_state import BaseState
 from core.ecs.entity import EntityManager
 from core.ecs.factory import EntityFactory
 # Import the new simulation systems
 from core.ecs.system import RenderSystem, PlayerInputSystem, MovementSystem, EnemySpawningSystem, EnemyChaseSystem, DeathSystem, \
     SkillSystem, SkillExecutionSystem, DamageSystem, ProjectileSpawningSystem, ProjectileMovementSystem, ProjectileImpactSystem, LifetimeSystem, \
-    EmotionRecognitionSystem, GameplayMappingSystem
+    EmotionRecognitionSystem, GameplayMappingSystem, DebugRenderSystem
 from core.ecs.component import TransformComponent
 from core.event_manager import EventManager
 from core.data_loader import DataLoader
@@ -41,6 +39,7 @@ class GameplayState(BaseState):
         # --- ML Simulation Systems Initialization ---
         self.emotion_recognition_system = EmotionRecognitionSystem(self.event_manager)
         self.gameplay_mapping_system = GameplayMappingSystem(self.event_manager, self.director)
+        self.debbug_render_system = DebugRenderSystem(self.director, self.gameplay_mapping_system)
 
         self.player = self.entity_factory.create_player(300, 300)
         
@@ -73,4 +72,5 @@ class GameplayState(BaseState):
         self.death_system.update()
         
     def draw(self, screen):
-        self.render_system.update(self.entity_manager, screen)
+        self.render_system.draw(self.entity_manager, screen)
+        self.debbug_render_system.draw(screen)

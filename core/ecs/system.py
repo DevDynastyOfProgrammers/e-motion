@@ -8,6 +8,7 @@ from core.events import PlayerMoveIntentEvent, EntityDeathEvent, ApplyAreaDamage
 from core.skill_data import AreaDamageEffectData, SpawnProjectileEffectData, AutoOnCooldownTriggerData, \
     PeriodicTriggerData
 from core.emotion import Emotion
+from core.director import GameStateVector
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
 class EmotionRecognitionSystem:
@@ -80,6 +81,65 @@ class GameplayMappingSystem:
             print(f"[MAPPING_MODEL] Applying new game state for emotion '{self._current_emotion.name}'")
             self.director.set_new_target_vector(target_vector)
 
+    def get_current_emotion_name(self) -> str:
+        """Returns the name of the last detected emotion."""
+        return self._current_emotion.name
+        
+    def get_time_to_next_mapping(self) -> float:
+        """Returns the remaining time until the next strategic vector update."""
+        return self.MAPPING_INTERVAL - self._time_since_last_mapping
+
+class DebugRenderSystem:
+    """
+    Renders real-time debug information about the ML simulation and
+    GameDirector state onto the screen.
+    """
+    def __init__(self, director, mapping_system):
+        self.director = director
+        self.mapping_system = mapping_system
+        self.font = pygame.font.Font(None, 26)
+        self.color = (255, 255, 255)
+        self.x_offset = 10
+        self.y_offset = 10
+        self.line_height = 28
+
+    def draw(self, screen):
+        """
+        Renders all debug text to the provided screen surface.
+        """
+        lines_to_render = []
+
+        # get data from GameplayMappingSystem
+        emotion = self.mapping_system.get_current_emotion_name()
+        countdown = self.mapping_system.get_time_to_next_mapping()
+        
+        lines_to_render.append("--- MAPPING SYSTEM ---")
+        lines_to_render.append(f"Current Emotion: {emotion}")
+        lines_to_render.append(f"Next Vector In: {countdown:.1f}s")
+        lines_to_render.append("") # Spacer
+
+        # get data from GameDirector
+        target_vector = self.director.get_target_vector()
+        current_vector = self.director.get_current_vector()
+        
+        lines_to_render.append("--- GAME DIRECTOR (Current -> Target) ---")
+
+        # formatting and aligning the vector parameters
+        for i, name in enumerate(GameStateVector.__members__):
+            # Format: "Parameter Name: 1.00 -> 1.50"
+            clean_name = name.replace('_MULTIPLIER', '').replace('_MODIFIER', '').replace('_', ' ').title()
+            line = (f"{clean_name:<20}: "
+                    f"{current_vector[i]:>5.2f} -> "
+                    f"{target_vector[i]:.2f}")
+            lines_to_render.append(line)
+
+        # 3. Blit all lines to the screen
+        current_y = self.y_offset
+        for i, line in enumerate(lines_to_render):
+            text_surface = self.font.render(line, True, self.color)
+            screen.blit(text_surface, (self.x_offset, current_y))
+            current_y += self.line_height
+
 # TODO : Transfer the transfer logic of enemies to MovementSystem
 class EnemyChaseSystem:
     """Processes AI-controlled enemies to chase the player"""
@@ -111,7 +171,7 @@ class EnemyChaseSystem:
 
 class RenderSystem:
     """Renders all entities with TransformComponent and RenderComponent to the screen"""
-    def update(self, entity_manager, screen):
+    def draw(self, entity_manager, screen):
         # Clear the screen
         screen.fill((20, 20, 20))
         

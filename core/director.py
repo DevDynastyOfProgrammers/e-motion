@@ -87,3 +87,11 @@ class GameDirector:
 
     def get_item_drop_chance_modifier(self) -> float:
         return self._current_state_vector[GameStateVector.ITEM_DROP_CHANCE_MODIFIER]
+    
+    # --- Getters for Debug UI ---
+    
+    def get_current_vector(self) -> List[float]:
+        return self._current_state_vector
+    
+    def get_target_vector(self) -> List[float]:
+        return self._target_state_vector
