@@ -1,10 +1,19 @@
 from core.skill_data import AnyEffectData
+from core.emotion import Emotion
 
 class Event:
     """
     Base class for all events.
     """
     pass
+
+class EmotionStateChangedEvent(Event):
+    """
+    Broadcast by the emotion recognition model simulator when a new
+    emotional state is detected.
+    """
+    def __init__(self, new_emotion: Emotion):
+        self.emotion = new_emotion
 
 class EntityDeathEvent(Event):
     """

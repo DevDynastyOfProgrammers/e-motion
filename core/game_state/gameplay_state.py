@@ -1,9 +1,13 @@
+# core/game_state/gameplay_state.py
+
 from .base_state import BaseState
 from core.ecs.entity import EntityManager
 from core.ecs.factory import EntityFactory
+# Import the new simulation systems
 from core.ecs.system import RenderSystem, PlayerInputSystem, MovementSystem, EnemySpawningSystem, EnemyChaseSystem, DeathSystem, \
-    SkillSystem, SkillExecutionSystem, DamageSystem, ProjectileSpawningSystem, ProjectileMovementSystem, ProjectileImpactSystem, LifetimeSystem
-from core.ecs.component import TransformComponent, PlayerInputComponent
+    SkillSystem, SkillExecutionSystem, DamageSystem, ProjectileSpawningSystem, ProjectileMovementSystem, ProjectileImpactSystem, LifetimeSystem, \
+    EmotionRecognitionSystem, GameplayMappingSystem
+from core.ecs.component import TransformComponent
 from core.event_manager import EventManager
 from core.data_loader import DataLoader
 from core.director import GameDirector
@@ -17,10 +21,9 @@ class GameplayState(BaseState):
         self.director = GameDirector()
         data_loader = DataLoader()
         self.skill_definitions, self.projectile_definitions = data_loader.load_game_data("skills.yaml")
-        # Pass director to factory
-        self.entity_factory = EntityFactory(self.entity_manager, self.director) 
+        self.entity_factory = EntityFactory(self.entity_manager, self.director)
         
-        # --- System Initialization (with Director injection) ---
+        # --- System Initialization ---
         self.render_system = RenderSystem()
         self.player_input_system = PlayerInputSystem(self.event_manager)
         self.movement_system = MovementSystem(self.event_manager, self.entity_manager, self.director)
@@ -29,27 +32,31 @@ class GameplayState(BaseState):
         self.death_system = DeathSystem(self.event_manager, self.entity_manager)
         self.skill_system = SkillSystem(self.event_manager, self.entity_manager, self.skill_definitions)
         self.skill_execution_system = SkillExecutionSystem(self.event_manager, self.entity_manager, self.skill_definitions)
-        # Pass director to DamageSystem
         self.damage_system = DamageSystem(self.event_manager, self.entity_manager, self.director)
         self.projectile_spawning_system = ProjectileSpawningSystem(self.event_manager, self.entity_manager, self.projectile_definitions, self.entity_factory)
         self.projectile_movement_system = ProjectileMovementSystem()
         self.projectile_impact_system = ProjectileImpactSystem(self.event_manager, self.entity_manager)
         self.lifetime_system = LifetimeSystem(self.event_manager, self.entity_manager)
         
+        # --- ML Simulation Systems Initialization ---
+        self.emotion_recognition_system = EmotionRecognitionSystem(self.event_manager)
+        self.gameplay_mapping_system = GameplayMappingSystem(self.event_manager, self.director)
+
         self.player = self.entity_factory.create_player(300, 300)
         
-        # --- Proof of Concept: Simulate receiving a full MVP vector ---
-        # TODO : Change this temporary code to model integration
-        # [spawn, enemy_spd, enemy_hp, enemy_dmg, player_spd, player_dmg, item_drop]
-        self.director.set_new_target_vector([2.0, 1.5, 2.5, 2.0, 1.4, 1.5, 1.0])
-
     def handle_events(self, events):
         """event handling plug"""
         pass
 
     def update(self, delta_time):
+        # Update ML simulators first
+        self.emotion_recognition_system.update(delta_time)
+        self.gameplay_mapping_system.update(delta_time)
+
+        # Update the director's state interpolation
         self.director.update(delta_time)
         
+        # --- Regular game loop ---
         self.player_input_system.update(self.entity_manager)
         self.skill_system.update(delta_time)
 
@@ -59,7 +66,9 @@ class GameplayState(BaseState):
         self.projectile_movement_system.update(self.entity_manager, delta_time)
         self.projectile_impact_system.update()
         self.lifetime_system.update(delta_time)
+        
         self.event_manager.process_events()
+        
         self.movement_system.update(delta_time)
         self.death_system.update()
         

@@ -4,10 +4,81 @@ import random
 from .component import TransformComponent, RenderComponent, PlayerInputComponent, AIComponent, \
     HealthComponent, TagComponent, SkillSetComponent, ProjectileComponent, DamageOnCollisionComponent, LifetimeComponent
 from core.events import PlayerMoveIntentEvent, EntityDeathEvent, ApplyAreaDamageEvent, \
-    ApplyDirectDamageEvent, RequestEntityRemovalEvent, SpawnProjectileEvent, RequestSkillActivationEvent
+    ApplyDirectDamageEvent, RequestEntityRemovalEvent, SpawnProjectileEvent, RequestSkillActivationEvent, EmotionStateChangedEvent
 from core.skill_data import AreaDamageEffectData, SpawnProjectileEffectData, AutoOnCooldownTriggerData, \
     PeriodicTriggerData
+from core.emotion import Emotion
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
+
+class EmotionRecognitionSystem:
+    """
+    Simulates an ML model that recognizes the player's emotion.
+    Periodically posts an EmotionStateChangedEvent.
+    """
+    RECOGNITION_INTERVAL = 5.0 # seconds
+
+    def __init__(self, event_manager):
+        self.event_manager = event_manager
+        self._time_since_last_recognition = 0.0
+
+    def update(self, delta_time: float):
+        """
+        Checks if it's time to generate a new emotion and post it.
+        """
+        self._time_since_last_recognition += delta_time
+        if self._time_since_last_recognition >= self.RECOGNITION_INTERVAL:
+            self._time_since_last_recognition = 0.0
+            
+            # Simulate the model's output by choosing a random emotion
+            new_emotion = random.choice(list(Emotion))
+            print(f"[EMOTION_MODEL] Detected new emotion: {new_emotion.name}")
+            self.event_manager.post(EmotionStateChangedEvent(new_emotion))
+
+class GameplayMappingSystem:
+    """
+    Simulates an ML model that maps an emotional state to a gameplay vector.
+    Listens for emotion changes but only acts on them periodically.
+    """
+    MAPPING_INTERVAL = 60.0 # seconds
+
+    def __init__(self, event_manager, director):
+        self.event_manager = event_manager
+        self.director = director
+        self._time_since_last_mapping = 0.0
+        self._current_emotion: Emotion = Emotion.NEUTRAL
+
+        # Data-driven mapping from emotion to gameplay vector
+        # [spawn, enemy_spd, enemy_hp, enemy_dmg, player_spd, player_dmg, item_drop]
+        self._emotion_to_vector_map = {
+            Emotion.NEUTRAL: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            Emotion.JOY:     [0.8, 0.9, 0.8, 0.8, 1.3, 1.2, 2.0], # Less challenge, more rewards
+            Emotion.ANGER:   [2.5, 1.5, 1.2, 1.5, 1.1, 1.5, 0.8], # High challenge, high power
+            Emotion.SORROW:  [0.7, 0.8, 0.9, 0.9, 0.9, 0.9, 1.0], # Calmer, less intense gameplay
+            Emotion.FEAR:    [3.0, 1.8, 1.0, 1.2, 1.2, 1.0, 1.2], # Overwhelming odds, but player is faster
+        }
+
+        self.event_manager.subscribe(EmotionStateChangedEvent, self._on_emotion_changed)
+
+    def _on_emotion_changed(self, event: EmotionStateChangedEvent):
+        """
+        Receives the latest emotion and stores it. Does not act on it immediately.
+        """
+        self._current_emotion = event.emotion
+        
+    def update(self, delta_time: float):
+        """
+        Checks if it's time to apply a new gameplay vector based on the
+        last known emotion.
+        """
+        self._time_since_last_mapping += delta_time
+        if self._time_since_last_mapping >= self.MAPPING_INTERVAL:
+            self._time_since_last_mapping = 0.0
+            
+            # Get the pre-defined vector for the current emotion
+            target_vector = self._emotion_to_vector_map.get(self._current_emotion, self._emotion_to_vector_map[Emotion.NEUTRAL])
+            
+            print(f"[MAPPING_MODEL] Applying new game state for emotion '{self._current_emotion.name}'")
+            self.director.set_new_target_vector(target_vector)
 
 # TODO : Transfer the transfer logic of enemies to MovementSystem
 class EnemyChaseSystem:
