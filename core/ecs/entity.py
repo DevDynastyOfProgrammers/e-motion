@@ -1,38 +1,38 @@
 class EntityManager:
     def __init__(self):
         self.next_entity_id = 0
-        self.components = {} # Словарь для хранения всех компонентов по типам
+        # Dict for holding all components by type
+        self.components = {}
 
     def create_entity(self):
-        """Создает новую сущность, возвращая ее уникальный ID."""
+        """Create a new entity and return its unique ID"""
         entity_id = self.next_entity_id
         self.next_entity_id += 1
         return entity_id
 
     def add_component(self, entity_id, component):
-        """Добавляет компонент к сущности."""
+        """Add a component to an entity"""
         component_type = type(component)
         if component_type not in self.components:
             self.components[component_type] = {}
         self.components[component_type][entity_id] = component
 
     def get_component(self, entity_id, component_type):
-        """Возвращает компонент определенного типа для сущности."""
+        """Get a component of a specific type for an entity"""
         return self.components.get(component_type, {}).get(entity_id)
 
     def get_entities_with_component(self, component_type):
-        """Генератор, возвращающий все сущности и их компоненты заданного типа."""
+        """Get an entity and their component of a specific type"""
         if component_type in self.components:
             return self.components[component_type].items()
-        return {}.items() # Возвращаем пустой итератор
+        return {}.items()  # Returns an empty iterator
 
     def get_entities_with_components(self, *component_types):
-        """Генератор, возвращающий ID сущности и кортеж ее компонентов для тех сущностей,
-        которые имеют ВСЕ указанные типы компонентов."""
+        """A generator that returns the entity ID and a tuple of its components
+        for those entities that have ALL the specified component types"""
         if not component_types:
             return
 
-        # Находим наименьший набор сущностей для итерации (оптимизация)
         base_component_dict = min((self.components.get(ct, {}) for ct in component_types), key=len)
 
         for entity_id in base_component_dict:
@@ -46,6 +46,12 @@ class EntityManager:
                 else:
                     all_components_present = False
                     break
-            
+
             if all_components_present:
                 yield entity_id, tuple(result_components)
+
+    def remove_entity(self, entity_id):
+        """Remove an entity and all its components"""
+        for component_dict in self.components.values():
+            if entity_id in component_dict:
+                del component_dict[entity_id]

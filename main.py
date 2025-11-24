@@ -1,7 +1,8 @@
 import pygame
-from settings import *
+from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from core.game_state.state_manager import GameStateManager
 from core.game_state.gameplay_state import GameplayState
+
 
 class Game:
     def __init__(self):
@@ -9,38 +10,39 @@ class Game:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.running = True
-        
-        # Паттерн "Состояние" (State) для управления сценами (меню, игра, геймовер)
+
+        # State pattern for managing game scenes (menu, gameplay, pause, game over)
         self.state_manager = GameStateManager()
         gameplay_state = GameplayState(self.state_manager)
         self.state_manager.push_state(gameplay_state)
 
     def run(self):
-        # Классический "Игровой цикл"
+        # Game loop
         while self.running:
             delta_time = self.clock.tick(FPS) / 1000.0
-            
-            # Получаем текущее активное состояние (например, GameplayState)
+
+            # Get the current active state
             current_state = self.state_manager.get_current_state()
             if not current_state:
                 self.running = False
                 continue
 
-            # 1. Обработка событий
+            # Handle events (only quit event)
             events = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
                     self.running = False
-            
-            # Делегируем обработку событий, обновление и отрисовку текущему состоянию
+
+            # Delegating event handling, updating, and rendering to the current state
             current_state.handle_events(events)
             current_state.update(delta_time)
             current_state.draw(self.screen)
 
             pygame.display.flip()
-        
+
         pygame.quit()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     game = Game()
     game.run()

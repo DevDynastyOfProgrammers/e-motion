@@ -1,0 +1,77 @@
+# This file defines the static properties of all skills in the game.
+# It allows to balance and create new skills without
+# touching any Python code.
+#
+# The 'type' field for each effect is CRITICAL. It tells our Python loader
+# which specific dataclass to use for instantiation.
+#
+
+EnemyAura:
+  # A weaker aura for enemies
+  trigger:
+    type: "PERIODIC" # Triggers periodically
+    interval: 1.0   # cooldown in seconds
+  effects:
+    - type: AREA_DAMAGE
+      radius: 50
+      damage: 5
+      target_group: "player"
+
+PlayerAura:
+  # This skill represents a constant damaging aura around the player
+  trigger:
+    type: "PERIODIC" # Triggers periodically
+    interval: 1.0   # cooldown in seconds
+  effects:
+    - type: AREA_DAMAGE
+      radius: 200
+      damage: 15
+      target_group: "enemy"
+
+Fireball:
+  cooldown: 1.0
+  trigger:
+    type: "AUTO_ON_COOLDOWN" # Automatically triggers when off cooldown
+  effects:
+    - type: SPAWN_PROJECTILE
+      projectile_id: "FieryProjectile"
+      target_logic: "nearest_enemy" 
+
+Iceball:
+  cooldown: 1.5
+  trigger:
+    type: "AUTO_ON_COOLDOWN" # Automatically triggers when off cooldown
+  effects:
+    - type: SPAWN_PROJECTILE
+      projectile_id: "IcyProjectile"
+      target_logic: "nearest_enemy"
+
+ProjectileDefinitions:
+  FieryProjectile:
+    # Components that will be added to the projectile entity upon creation
+    components:
+      Transform:
+        width: 15
+        height: 15
+        velocity: 450
+      Render:
+        color: [255, 100, 0]
+      DamageOnCollision:
+        damage: 25
+        target_group: "enemy"
+      Lifetime: # time of existence in seconds
+        duration: 3.0
+  IcyProjectile:
+    # Components that will be added to the projectile entity upon creation
+    components:
+      Transform:
+        width: 60
+        height: 60
+        velocity: 200
+      Render:
+        color: [0, 100, 255]
+      DamageOnCollision:
+        damage: 25
+        target_group: "enemy"
+      Lifetime: # time of existence in seconds
+        duration: 4.5

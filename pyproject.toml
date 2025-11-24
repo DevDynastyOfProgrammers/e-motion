@@ -1,0 +1,40 @@
+[project]
+name = "e-motion"
+version = "0.1.0"
+description = "A vampire-like survivor game driven by player emotions."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pygame>=2.5.0",
+    "pyyaml>=6.0",
+    "numpy>=1.26.0",
+    "python-dotenv>=1.0.0",
+    "loguru>=0.7.0",
+    "opencv-python>=4.8.0",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.8.0",
+    "ruff>=0.1.0",
+    "types-pyyaml>=6.0.12.20250915",
+]
+
+[tool.mypy]
+python_version = "3.10"
+# temorarily disabled
+# strict = true
+explicit_package_bases = true
+ignore_missing_imports = true
+exclude = [".venv", "build", "dist"]
+
+# Adding specific settings so as not to stifle development
+disallow_untyped_defs = false      # Do not require types for all functions (yet)
+disallow_incomplete_defs = true    # But if you start typing, do it to the end
+check_untyped_defs = true          # Check the body of untyped functions
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

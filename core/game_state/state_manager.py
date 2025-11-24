@@ -1,22 +1,24 @@
 class GameStateManager:
     """
-    Управляет стеком состояний игры.
-    Позволяет переключаться между различными экранами (меню, игра, пауза).
+    Manages the stack of game states.
+    Allows switching between different screens (menu, gameplay, pause)
     """
+
     def __init__(self):
-        self.states = []  # Используем список как стек состояний
+        # Stack of game states
+        self.states = []
 
     def push_state(self, state):
-        """Добавляет новое состояние в вершину стека (делает его активным)."""
+        """Add new state to the top of the stack (makes it active)"""
         self.states.append(state)
 
     def pop_state(self):
-        """Удаляет верхнее состояние из стека."""
+        """Delete the top state from the stack"""
         if self.states:
             self.states.pop()
 
     def get_current_state(self):
-        """Возвращает текущее активное состояние (верхнее в стеке)."""
+        """Returns the current active state (top of the stack)"""
         if self.states:
             return self.states[-1]
         return None
