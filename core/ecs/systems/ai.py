@@ -83,11 +83,11 @@ class EmotionRecognitionSystem:
             else:
                 # If no camera, model handles None (usually returns Mock/Neutral)
                 # Or we explicitly fallback to mock behavior here if needed
-                new_emotion = self.model.predict(np.zeros((1, 1)))
+                prediction = self.model.predict(np.zeros((1, 1)))
 
             # 3. Broadcast
-            logger.debug(f"[AI MODEL] Inference result: {new_emotion.name}")
-            self.event_manager.post(EmotionStateChangedEvent(new_emotion))
+            logger.debug(f"[AI MODEL] Dominant: {prediction.dominant_emotion.name} ({prediction.confidence:.2f})")
+            self.event_manager.post(EmotionStateChangedEvent(prediction))
 
 
 class GameplayMappingSystem:
@@ -147,7 +147,10 @@ class GameplayMappingSystem:
         }
 
     def _on_emotion_changed(self, event: EmotionStateChangedEvent) -> None:
-        self._current_emotion = event.emotion
+        self._current_emotion = event.prediction.dominant_emotion
+        
+        # Store the full prediction if needed for debug or future logic
+        self._last_prediction = event.prediction 
         
     def update(self, delta_time: float) -> None:
         self._time_since_last_mapping += delta_time
@@ -159,6 +162,14 @@ class GameplayMappingSystem:
                 self._emotion_to_vector_map[Emotion.NEUTRAL]
             )
             
+            # DIRECTOR MODEL'S FUTURE LOGIC:
+            # inputs = [
+            #    self._last_prediction.prob_angry_disgust,
+            #    self._last_prediction.prob_fear_surprise,
+            #    ...
+            # ]
+            # target_vector = self.model.predict(inputs)
+
             logger.debug(f"[MAPPING] Emotion '{self._current_emotion.name}' -> Updating Game State")
             self.director.set_new_target_vector(target_vector)
 

@@ -1,5 +1,5 @@
 from core.skill_data import AnyEffectData
-from core.emotion import Emotion
+from core.emotion import Emotion, EmotionPrediction
 
 
 class Event:
@@ -16,8 +16,8 @@ class EmotionStateChangedEvent(Event):
     emotional state is detected.
     """
 
-    def __init__(self, new_emotion: Emotion):
-        self.emotion = new_emotion
+    def __init__(self, prediction: EmotionPrediction):
+        self.prediction = prediction
 
 
 class EntityDeathEvent(Event):
