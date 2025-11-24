@@ -3,6 +3,7 @@ class GameStateManager:
     Manages the stack of game states.
     Allows switching between different screens (menu, gameplay, pause)
     """
+
     def __init__(self):
         # Stack of game states
         self.states = []

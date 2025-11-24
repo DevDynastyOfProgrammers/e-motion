@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+
 def get_env_int(key: str, default: int) -> int:
     """Helper to read an int from env with a default fallback."""
     value = os.getenv(key)
@@ -15,9 +16,11 @@ def get_env_int(key: str, default: int) -> int:
         print(f"WARNING: Invalid integer for {key}={value}. Using default {default}.")
         return default
 
+
 def get_env_str(key: str, default: str) -> str:
     """Helper to read a string from env with a default fallback."""
     return os.getenv(key, default)
+
 
 # Window settings
 SCREEN_WIDTH: int = get_env_int("SCREEN_WIDTH", 1280)

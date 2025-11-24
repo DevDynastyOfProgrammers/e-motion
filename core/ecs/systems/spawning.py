@@ -7,15 +7,17 @@ from core.ecs.component import TransformComponent, AIComponent
 from core.event_manager import EventManager
 from core.director import GameDirector
 from core.events import SpawnProjectileEvent
-from core.skill_data import ProjectileData
+from core.skill_data import ProjectileData, SpawnProjectileEffectData
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
+
 
 class EnemySpawningSystem:
     """Manages the spawning of enemy waves over time."""
-    def __init__(self, entity_factory: EntityFactory, director: GameDirector):
+
+    def __init__(self, entity_factory: EntityFactory, director: GameDirector) -> None:
         self.factory = entity_factory
         self.director = director
-        
+
         self.time_since_last_single_spawn = 0.0
         self.base_single_spawn_interval = 3.0
 
@@ -24,7 +26,7 @@ class EnemySpawningSystem:
         self.group_size = 5
         self.group_spawn_radius = 100.0
 
-    def update(self, delta_time: float):
+    def update(self, delta_time: float) -> None:
         spawn_rate_multiplier = self.director.get_spawn_rate_multiplier()
         if spawn_rate_multiplier <= 0:
             spawn_rate_multiplier = 0.001
@@ -44,17 +46,21 @@ class EnemySpawningSystem:
 
     def _get_random_offscreen_position(self):
         side = random.randint(0, 3)
-        if side == 0: x, y = random.randint(0, SCREEN_WIDTH), -50
-        elif side == 1: x, y = SCREEN_WIDTH + 50, random.randint(0, SCREEN_HEIGHT)
-        elif side == 2: x, y = random.randint(0, SCREEN_WIDTH), SCREEN_HEIGHT + 50
-        else: x, y = -50, random.randint(0, SCREEN_HEIGHT)
+        if side == 0:
+            x, y = random.randint(0, SCREEN_WIDTH), -50
+        elif side == 1:
+            x, y = SCREEN_WIDTH + 50, random.randint(0, SCREEN_HEIGHT)
+        elif side == 2:
+            x, y = random.randint(0, SCREEN_WIDTH), SCREEN_HEIGHT + 50
+        else:
+            x, y = -50, random.randint(0, SCREEN_HEIGHT)
         return x, y
 
-    def _spawn_single_enemy(self):
+    def _spawn_single_enemy(self) -> None:
         x, y = self._get_random_offscreen_position()
         self.factory.create_enemy(x, y)
 
-    def _spawn_enemy_group(self):
+    def _spawn_enemy_group(self) -> None:
         center_x, center_y = self._get_random_offscreen_position()
         print(f"Spawning GROUP of {self.group_size} enemies around ({center_x}, {center_y})")
         for _ in range(self.group_size):
@@ -65,15 +71,24 @@ class EnemySpawningSystem:
 
 class ProjectileSpawningSystem:
     """Listens for SpawnProjectileEvent and creates projectiles."""
-    def __init__(self, event_manager: EventManager, entity_manager: EntityManager, 
-                 projectile_definitions: Dict[str, ProjectileData], factory: EntityFactory):
+
+    def __init__(
+        self,
+        event_manager: EventManager,
+        entity_manager: EntityManager,
+        projectile_definitions: Dict[str, ProjectileData],
+        factory: EntityFactory,
+    ) -> None:
         self.event_manager = event_manager
         self.entity_manager = entity_manager
         self.projectile_definitions = projectile_definitions
         self.factory = factory
         self.event_manager.subscribe(SpawnProjectileEvent, self.on_spawn_projectile)
-    
-    def on_spawn_projectile(self, event: SpawnProjectileEvent):
+
+    def on_spawn_projectile(self, event: SpawnProjectileEvent) -> None:
+        if not isinstance(event.effect_data, SpawnProjectileEffectData):
+            return
+
         caster_transform = self.entity_manager.get_component(event.caster_id, TransformComponent)
         if not caster_transform: return
         
@@ -81,7 +96,7 @@ class ProjectileSpawningSystem:
         if not projectile_data:
             print(f"ERROR: Unknown projectile_id '{event.effect_data.projectile_id}'")
             return
-        
+
         direction = (1.0, 0.0)
         if event.effect_data.target_logic == "nearest_enemy":
             target = self._find_nearest_enemy(caster_transform.x, caster_transform.y)
@@ -92,16 +107,18 @@ class ProjectileSpawningSystem:
                 dist = math.hypot(dx, dy)
                 if dist > 0:
                     direction = (dx / dist, dy / dist)
-        
-        self.factory.create_projectile(event.caster_id, caster_transform.x, caster_transform.y, direction, projectile_data)
 
-    def _find_nearest_enemy(self, x: float, y: float):
+        self.factory.create_projectile(
+            event.caster_id, caster_transform.x, caster_transform.y, direction, projectile_data
+        )
+
+    def _find_nearest_enemy(self, x: float, y: float) -> int | None:
         enemies = self.entity_manager.get_entities_with_components(AIComponent, TransformComponent)
         closest_enemy = None
-        min_dist_sq = float('inf')
+        min_dist_sq = float("inf")
 
         for enemy_id, (ai, transform) in enemies:
-            dist_sq = (transform.x - x)**2 + (transform.y - y)**2
+            dist_sq = (transform.x - x) ** 2 + (transform.y - y) ** 2
             if dist_sq < min_dist_sq:
                 min_dist_sq = dist_sq
                 closest_enemy = enemy_id

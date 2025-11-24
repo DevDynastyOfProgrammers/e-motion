@@ -1,5 +1,6 @@
-from typing import Protocol, List, Any, runtime_checkable
+from typing import Protocol, List, runtime_checkable
 import pygame
+
 
 @runtime_checkable
 class GameState(Protocol):
@@ -8,7 +9,7 @@ class GameState(Protocol):
     Using Protocol allows for structural subtyping and better static analysis
     compared to abstract base classes.
     """
-    
+
     def handle_events(self, events: List[pygame.event.Event]) -> None:
         """
         Process raw PyGame events.

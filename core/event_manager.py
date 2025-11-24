@@ -1,15 +1,17 @@
 from collections import defaultdict
-from typing import Callable, Type
+from typing import Callable, Type, Any
 from core.events import Event
 
 # Define a type alias for event handlers
-# Handler receives an Event (or subclass) and returns None
-HandlerType = Callable[[Event], None]
+# Handler receives any Event (or subclass) and returns None
+HandlerType = Callable[[Any], None]
+
 
 class EventManager:
     """
     Manages event broadcasting and subscription.
     """
+
     def __init__(self) -> None:
         # Modern typing for dict and list
         self.subscribers: dict[Type[Event], list[HandlerType]] = defaultdict(list)
@@ -41,10 +43,10 @@ class EventManager:
         """
         queue_to_process = self.event_queue[:]
         self.event_queue.clear()
-        
+
         for event in queue_to_process:
             event_type = type(event)
             # Find subscribers for this exact event type
             if event_type in self.subscribers:
                 for handler in self.subscribers[event_type]:
-                    handler(event) # type: ignore
+                    handler(event)  # type: ignore

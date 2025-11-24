@@ -25,10 +25,10 @@ class EntityManager:
         """Get an entity and their component of a specific type"""
         if component_type in self.components:
             return self.components[component_type].items()
-        return {}.items() # Returns an empty iterator
+        return {}.items()  # Returns an empty iterator
 
     def get_entities_with_components(self, *component_types):
-        """A generator that returns the entity ID and a tuple of its components 
+        """A generator that returns the entity ID and a tuple of its components
         for those entities that have ALL the specified component types"""
         if not component_types:
             return
@@ -46,7 +46,7 @@ class EntityManager:
                 else:
                     all_components_present = False
                     break
-            
+
             if all_components_present:
                 yield entity_id, tuple(result_components)
 
