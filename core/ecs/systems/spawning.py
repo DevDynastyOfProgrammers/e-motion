@@ -92,8 +92,9 @@ class ProjectileSpawningSystem:
             return
 
         caster_transform = self.entity_manager.get_component(event.caster_id, TransformComponent)
-        if not caster_transform: return
-        
+        if not caster_transform:
+            return
+
         projectile_data = self.projectile_definitions.get(event.effect_data.projectile_id)
         if not projectile_data:
             logger.error(f"Unknown projectile_id '{event.effect_data.projectile_id}'")

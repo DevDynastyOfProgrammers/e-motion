@@ -1,87 +1,82 @@
+from dataclasses import dataclass
 from core.skill_data import AnyEffectData
-from core.emotion import Emotion, EmotionPrediction
+from core.emotion import EmotionPrediction
 
 
+@dataclass(frozen=True)
 class Event:
-    """
-    Base class for all events.
-    """
+    """Base immutable class for all events."""
 
     pass
 
 
+# --- ML & Input Events ---
+
+
+@dataclass(frozen=True)
 class EmotionStateChangedEvent(Event):
-    """
-    Broadcast by the emotion recognition model simulator when a new
-    emotional state is detected.
-    """
+    """Broadcast when the vision model produces a new prediction."""
 
-    def __init__(self, prediction: EmotionPrediction):
-        self.prediction = prediction
+    prediction: EmotionPrediction
 
 
-class EntityDeathEvent(Event):
-    """
-    Event broadcast when an entity's health reaches zero.
-    """
-
-    def __init__(self, entity_id):
-        self.entity_id = entity_id
-
-
+@dataclass(frozen=True)
 class PlayerMoveIntentEvent(Event):
-    """
-    Event broadcast by the input system when the player intends to move.
-    Carries a direction vector.
-    """
+    """Broadcast when the player presses movement keys."""
 
-    def __init__(self, entity_id, direction):
-        self.entity_id = entity_id
-        self.direction = direction
+    entity_id: int
+    direction: tuple[float, float]
 
 
+@dataclass(frozen=True)
 class RequestSkillActivationEvent(Event):
-    """Broadcast when an entity wants to activate a skill."""
+    """Broadcast when a skill trigger condition is met."""
 
-    def __init__(self, entity_id, skill_id):
-        self.entity_id = entity_id
-        self.skill_id = skill_id
-
-
-# --- Skill Effect Events ---
+    entity_id: int
+    skill_id: str
 
 
+# --- Combat & Physics Events ---
+
+
+@dataclass(frozen=True)
 class ApplyAreaDamageEvent(Event):
-    """Broadcast to apply area damage."""
+    """Request to apply damage in a radius."""
 
-    def __init__(self, caster_id, caster_pos, effect_data):
-        self.caster_id = caster_id
-        self.caster_pos = caster_pos
-        self.effect_data: AnyEffectData = effect_data
-
-
-class SpawnProjectileEvent(Event):
-    """Broadcast to spawn a projectile."""
-
-    def __init__(self, caster_id, effect_data):
-        self.caster_id = caster_id
-        self.effect_data: AnyEffectData = effect_data
+    caster_id: int
+    caster_pos: tuple[float, float]
+    effect_data: AnyEffectData
 
 
-# --- Damage & Removal Events ---
-
-
+@dataclass(frozen=True)
 class ApplyDirectDamageEvent(Event):
-    """Broadcast to apply damage to a single, specific entity."""
+    """Request to apply damage to a specific target."""
 
-    def __init__(self, caster_id, target_id, damage):
-        self.caster_id = caster_id  # ID to identify the damage source
-        self.target_id = target_id
-        self.damage = damage
+    caster_id: int
+    target_id: int
+    damage: int
 
 
+@dataclass(frozen=True)
+class SpawnProjectileEvent(Event):
+    """Request to spawn a projectile entity."""
+
+    caster_id: int
+    effect_data: AnyEffectData
+
+
+# --- Lifecycle Events ---
+
+
+@dataclass(frozen=True)
 class RequestEntityRemovalEvent(Event):
-    """Broadcast to request the removal of an entity (e.g., a projectile)."""
+    """Request to safely remove an entity from the manager."""
 
-    def __init__(self, entity_id):
-        self.entity_id = entity_id
+    entity_id: int
+
+
+@dataclass(frozen=True)
+class EntityDeathEvent(Event):
+    """Notification that an entity has been removed due to death/destruction."""
+
+    entity_id: int

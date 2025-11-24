@@ -1,15 +1,18 @@
 from enum import Enum, auto
 from dataclasses import dataclass
 
+
 class Emotion(Enum):
     """
     Defines the high-level emotional states for Game Logic (Director).
     """
+
     NEUTRAL = auto()
     JOY = auto()
     ANGER = auto()
     SORROW = auto()
     FEAR = auto()
+
 
 @dataclass
 class EmotionPrediction:
@@ -17,9 +20,10 @@ class EmotionPrediction:
     Raw output from the Vision Model.
     Passed directly to Core Game Director Model.
     """
+
     dominant_emotion: Emotion
     confidence: float
-    
+
     # Specific probabilities from the model
     prob_angry_disgust: float
     prob_fear_surprise: float
@@ -34,5 +38,5 @@ class EmotionPrediction:
             self.prob_fear_surprise,
             self.prob_happy,
             self.prob_neutral,
-            self.prob_sad
+            self.prob_sad,
         ]

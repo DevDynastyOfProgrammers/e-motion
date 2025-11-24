@@ -85,7 +85,9 @@ class SkillExecutionSystem:
             return
 
         skill_set.cooldowns[event.skill_id] = skill_data.cooldown
-        logger.debug(f"Entity {event.entity_id} activated skill '{event.skill_id}' with cooldown {skill_data.cooldown}.")
+        logger.debug(
+            f"Entity {event.entity_id} activated skill '{event.skill_id}' with cooldown {skill_data.cooldown}."
+        )
 
         for effect in skill_data.effects:
             if isinstance(effect, AreaDamageEffectData):

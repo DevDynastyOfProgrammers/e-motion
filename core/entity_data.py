@@ -1,16 +1,19 @@
 from dataclasses import dataclass, field
 
+
 @dataclass
 class EntityTransformData:
     width: float
     height: float
     velocity: float
 
+
 @dataclass
 class EntityData:
     """
     Represents the static configuration for a game entity (Player, Enemy, etc.)
     """
+
     id: str
     transform: EntityTransformData
     max_hp: int
