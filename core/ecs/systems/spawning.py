@@ -27,7 +27,7 @@ class EnemySpawningSystem:
         self.group_spawn_radius = 100.0
 
     def update(self, delta_time: float) -> None:
-        spawn_rate_multiplier = self.director.get_spawn_rate_multiplier()
+        spawn_rate_multiplier = self.director.state.spawn_rate_multiplier
         if spawn_rate_multiplier <= 0:
             spawn_rate_multiplier = 0.001
 

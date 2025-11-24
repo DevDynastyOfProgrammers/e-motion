@@ -3,7 +3,7 @@ import time
 import numpy as np
 from loguru import logger
 from core.emotion import Emotion
-from core.director import GameDirector
+from core.director import GameDirector, GameStateVector
 from core.event_manager import EventManager
 from core.events import EmotionStateChangedEvent
 from core.ml.wrapper import create_emotion_model, EmotionModel, RandomEmotionModel
@@ -94,8 +94,7 @@ class GameplayMappingSystem:
     """
     Simulates an ML model that maps an emotional state to a gameplay vector.
     """
-
-    MAPPING_INTERVAL = 5.0  # seconds
+    MAPPING_INTERVAL = 5.0 
 
     def __init__(self, event_manager: EventManager, director: GameDirector) -> None:
         self.event_manager = event_manager
@@ -103,24 +102,58 @@ class GameplayMappingSystem:
         self._time_since_last_mapping = 0.0
         self._current_emotion: Emotion = Emotion.NEUTRAL
 
-        self._emotion_to_vector_map = {
-            Emotion.NEUTRAL: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-            Emotion.JOY: [0.8, 0.9, 0.8, 0.8, 1.3, 1.2, 2.0],
-            Emotion.ANGER: [2.5, 1.5, 1.2, 1.5, 1.1, 1.5, 0.8],
-            Emotion.SORROW: [0.7, 0.8, 0.9, 0.9, 0.9, 0.9, 1.0],
-            Emotion.FEAR: [3.0, 1.8, 1.0, 1.2, 1.2, 1.0, 1.2],
-        }
+        self._init_emotion_settings()
 
         self.event_manager.subscribe(EmotionStateChangedEvent, self._on_emotion_changed)
 
+    def _init_emotion_settings(self) -> None:
+        # Data-driven mapping from emotion to GameStateVector
+        self._emotion_to_vector_map: dict[Emotion, GameStateVector] = {
+            Emotion.NEUTRAL: GameStateVector(), # Defaults to all 1.0
+            
+            Emotion.JOY: GameStateVector(
+                spawn_rate_multiplier=0.8,
+                enemy_speed_multiplier=0.9,
+                player_speed_multiplier=1.3,
+                player_damage_multiplier=1.2,
+                item_drop_chance_modifier=2.0
+            ),
+            
+            Emotion.ANGER: GameStateVector(
+                spawn_rate_multiplier=2.5,
+                enemy_speed_multiplier=1.5,
+                enemy_health_multiplier=1.2,
+                enemy_damage_multiplier=1.5,
+                player_damage_multiplier=1.5,
+                item_drop_chance_modifier=0.8
+            ),
+            
+            Emotion.SORROW: GameStateVector(
+                spawn_rate_multiplier=0.7,
+                enemy_speed_multiplier=0.8,
+                enemy_health_multiplier=0.9,
+                enemy_damage_multiplier=0.9,
+                player_speed_multiplier=0.9,
+                player_damage_multiplier=0.9
+            ),
+            
+            Emotion.FEAR: GameStateVector(
+                spawn_rate_multiplier=3.0,
+                enemy_speed_multiplier=1.8,
+                enemy_health_multiplier=1.0,
+                enemy_damage_multiplier=1.2,
+                player_speed_multiplier=1.2
+            ),
+        }
+
     def _on_emotion_changed(self, event: EmotionStateChangedEvent) -> None:
         self._current_emotion = event.emotion
-
+        
     def update(self, delta_time: float) -> None:
         self._time_since_last_mapping += delta_time
         if self._time_since_last_mapping >= self.MAPPING_INTERVAL:
             self._time_since_last_mapping = 0.0
-
+            
             target_vector = self._emotion_to_vector_map.get(
                 self._current_emotion, 
                 self._emotion_to_vector_map[Emotion.NEUTRAL]
@@ -131,6 +164,6 @@ class GameplayMappingSystem:
 
     def get_current_emotion_name(self) -> str:
         return self._current_emotion.name
-
+        
     def get_time_to_next_mapping(self) -> float:
         return self.MAPPING_INTERVAL - self._time_since_last_mapping

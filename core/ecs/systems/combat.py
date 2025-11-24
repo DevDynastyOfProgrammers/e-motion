@@ -29,9 +29,9 @@ class DamageSystem:
 
     def _get_damage_multiplier(self, caster_id: int) -> float:
         if self.entity_manager.get_component(caster_id, PlayerInputComponent):
-            return self.director.get_player_damage_multiplier()
+            return self.director.state.player_damage_multiplier
         elif self.entity_manager.get_component(caster_id, AIComponent):
-            return self.director.get_enemy_damage_multiplier()
+            return self.director.state.enemy_damage_multiplier
         return 1.0
 
     def on_area_damage(self, event: ApplyAreaDamageEvent) -> None:

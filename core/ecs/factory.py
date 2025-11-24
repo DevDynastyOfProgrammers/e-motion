@@ -9,7 +9,7 @@ from core.ecs.component import (
     LifetimeComponent, SkillSetComponent, ProjectileComponent, Component
 )
 from core.skill_data import ProjectileData
-from core.entity_data import EntityData # <-- Import
+from core.entity_data import EntityData
 
 class EntityFactory:
     """
@@ -19,7 +19,7 @@ class EntityFactory:
         self, 
         entity_manager: EntityManager, 
         director: GameDirector,
-        entity_definitions: dict[str, EntityData] # <-- Inject Data
+        entity_definitions: dict[str, EntityData]
     ) -> None:
         self.entity_manager = entity_manager
         self.director = director 
@@ -62,7 +62,7 @@ class EntityFactory:
         # 3. Health
         max_hp = data.max_hp
         if is_enemy:
-            health_multiplier = self.director.get_enemy_health_multiplier()
+            health_multiplier = self.director.state.enemy_health_multiplier
             max_hp = int(max_hp * health_multiplier)
         
         self.entity_manager.add_component(entity_id, HealthComponent(max_hp, max_hp))

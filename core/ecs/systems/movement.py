@@ -35,7 +35,7 @@ class MovementSystem:
             if transform:
                 speed_multiplier = 1.0
                 if self.entity_manager.get_component(entity_id, PlayerInputComponent):
-                    speed_multiplier = self.director.get_player_speed_multiplier()
+                    speed_multiplier = self.director.state.player_speed_multiplier
 
                 transform.x += direction[0] * transform.velocity * speed_multiplier * delta_time
                 transform.y += direction[1] * transform.velocity * speed_multiplier * delta_time
@@ -55,7 +55,7 @@ class EnemyChaseSystem:
         if not player_transform:
             return
 
-        speed_multiplier = self.director.get_enemy_speed_multiplier()
+        speed_multiplier = self.director.state.enemy_speed_multiplier
 
         enemies = entity_manager.get_entities_with_components(AIComponent, TransformComponent)
         for entity, (ai_comp, transform) in enemies:
