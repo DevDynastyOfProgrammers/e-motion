@@ -1,24 +1,34 @@
-from .base_state import BaseState
+import pygame
+from core.game_state.base import GameState
 from core.ecs.entity import EntityManager
 from core.ecs.factory import EntityFactory
-# Import the new simulation systems
-from core.ecs.system import RenderSystem, PlayerInputSystem, MovementSystem, EnemySpawningSystem, EnemyChaseSystem, DeathSystem, \
-    SkillSystem, SkillExecutionSystem, DamageSystem, ProjectileSpawningSystem, ProjectileMovementSystem, ProjectileImpactSystem, LifetimeSystem, \
-    EmotionRecognitionSystem, GameplayMappingSystem, DebugRenderSystem
-from core.ecs.component import TransformComponent
 from core.event_manager import EventManager
 from core.data_loader import DataLoader
 from core.director import GameDirector
+from core.ecs.component import TransformComponent
 
-class GameplayState(BaseState):
+from core.ecs.systems import (
+    RenderSystem, PlayerInputSystem, MovementSystem, EnemySpawningSystem, 
+    EnemyChaseSystem, DeathSystem, SkillSystem, SkillExecutionSystem, 
+    DamageSystem, ProjectileSpawningSystem, ProjectileMovementSystem, 
+    ProjectileImpactSystem, LifetimeSystem, EmotionRecognitionSystem, 
+    GameplayMappingSystem, DebugRenderSystem
+)
+
+class GameplayState:
+    """
+    Main gameplay state implementing the GameState Protocol.
+    """
     def __init__(self, state_manager):
-        super().__init__(state_manager)
+        self.state_manager = state_manager
         
         self.entity_manager = EntityManager()
         self.event_manager = EventManager()
         self.director = GameDirector()
+        
         data_loader = DataLoader()
         self.skill_definitions, self.projectile_definitions = data_loader.load_game_data("skills.yaml")
+        
         self.entity_factory = EntityFactory(self.entity_manager, self.director)
         
         # --- System Initialization ---
@@ -43,11 +53,12 @@ class GameplayState(BaseState):
 
         self.player = self.entity_factory.create_player(300, 300)
         
-    def handle_events(self, events):
-        """event handling plug"""
+    def handle_events(self, events: list[pygame.event.Event]) -> None:
+        """Process events (Protocol implementation)"""
         pass
 
-    def update(self, delta_time):
+    def update(self, delta_time: float) -> None:
+        """Update logic (Protocol implementation)"""
         # Update ML simulators first
         self.emotion_recognition_system.update(delta_time)
         self.gameplay_mapping_system.update(delta_time)
@@ -71,6 +82,7 @@ class GameplayState(BaseState):
         self.movement_system.update(delta_time)
         self.death_system.update()
         
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface) -> None:
+        """Render logic (Protocol implementation)"""
         self.render_system.draw(self.entity_manager, screen)
         self.debbug_render_system.draw(screen)

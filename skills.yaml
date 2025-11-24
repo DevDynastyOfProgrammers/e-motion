@@ -37,6 +37,15 @@ Fireball:
       projectile_id: "FieryProjectile"
       target_logic: "nearest_enemy" 
 
+Iceball:
+  cooldown: 1.5
+  trigger:
+    type: "AUTO_ON_COOLDOWN" # Automatically triggers when off cooldown
+  effects:
+    - type: SPAWN_PROJECTILE
+      projectile_id: "IcyProjectile"
+      target_logic: "nearest_enemy"
+
 ProjectileDefinitions:
   FieryProjectile:
     # Components that will be added to the projectile entity upon creation
@@ -52,3 +61,17 @@ ProjectileDefinitions:
         target_tag: "enemy"
       Lifetime: # time of existence in seconds
         duration: 3.0
+  IcyProjectile:
+    # Components that will be added to the projectile entity upon creation
+    components:
+      Transform:
+        width: 60
+        height: 60
+        velocity: 200
+      Render:
+        color: [0, 100, 255]
+      DamageOnCollision:
+        damage: 25
+        target_tag: "enemy"
+      Lifetime: # time of existence in seconds
+        duration: 4.5

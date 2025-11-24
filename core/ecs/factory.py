@@ -1,5 +1,3 @@
-# core/ecs/factory.py
-
 from .component import TransformComponent, RenderComponent, PlayerInputComponent, \
     AIComponent, HealthComponent, TagComponent, DamageOnCollisionComponent, \
     LifetimeComponent, SkillSetComponent, ProjectileComponent
@@ -27,7 +25,7 @@ class EntityFactory:
         self.entity_manager.add_component(player_id, PlayerInputComponent())
         self.entity_manager.add_component(player_id, HealthComponent(100, 100))
         self.entity_manager.add_component(player_id, TagComponent(tag="player"))
-        self.entity_manager.add_component(player_id, SkillSetComponent(skill_ids=["PlayerAura", "Fireball"]))
+        self.entity_manager.add_component(player_id, SkillSetComponent(skill_ids=["PlayerAura", "Fireball", "Iceball"]))
         
         return player_id
 
