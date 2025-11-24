@@ -36,3 +36,5 @@ LOG_LEVEL: str = get_env_str("LOG_LEVEL", "INFO")
 
 # Debug print to verify loading (Temporary)
 print(f"[CONFIG] Loaded: {SCREEN_WIDTH}x{SCREEN_HEIGHT} @ {FPS}FPS | Log: {LOG_LEVEL}")
+
+EMOTION_MODEL_PATH: str = get_env_str("EMOTION_MODEL_PATH", "assets/models/emotion_model.pt")
