@@ -53,7 +53,7 @@ class DataLoader:
                     transform=transform,
                     max_hp=int(value['health']['max_hp']),
                     color=color,
-                    tags=value.get('tags', []),
+                    # tags=value.get('tags', []),
                     components=value.get('components', []),
                     skills=value.get('skills', [])
                 )

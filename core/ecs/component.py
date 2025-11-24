@@ -44,11 +44,11 @@ class HealthComponent(Component):
         self.max_hp = max_hp
 
 
-class TagComponent(Component):
-    """Marker component for tagging entities (e.g., 'enemy', 'player')"""
+# class TagComponent(Component):
+#     """Marker component for tagging entities (e.g., 'enemy', 'player')"""
 
-    def __init__(self, tag):
-        self.tag = tag
+#     def __init__(self, tag):
+#         self.tag = tag
 
 
 class SkillSetComponent(Component):
@@ -80,9 +80,9 @@ class DamageOnCollisionComponent(Component):
     Data component for entities that deal damage on collision (like projectiles).
     """
 
-    def __init__(self, damage: int, target_tag: str):
+    def __init__(self, damage: int, target_group: str):
         self.damage = damage
-        self.target_tag = target_tag
+        self.target_group = target_group
 
 
 class LifetimeComponent(Component):

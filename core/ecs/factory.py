@@ -1,11 +1,9 @@
-# core/ecs/factory.py
-
 from typing import Type
 from core.ecs.entity import EntityManager
 from core.director import GameDirector
 from core.ecs.component import (
     TransformComponent, RenderComponent, PlayerInputComponent, 
-    AIComponent, HealthComponent, TagComponent, DamageOnCollisionComponent, 
+    AIComponent, HealthComponent, DamageOnCollisionComponent, 
     LifetimeComponent, SkillSetComponent, ProjectileComponent, Component
 )
 from core.skill_data import ProjectileData
@@ -38,19 +36,15 @@ class EntityFactory:
         """
         data = self.entity_definitions.get(config_key)
         if not data:
-            print(f"CRITICAL ERROR: Entity definition '{config_key}' not found!")
-            # Return a valid ID to avoid crash, but it will be empty (or raise Error)
             return self.entity_manager.create_entity()
 
         entity_id = self.entity_manager.create_entity()
 
         # 1. Transform & Velocity
         velocity = data.transform.velocity
-        if is_enemy:
-            # Apply Director Multiplier only for enemies (or adapt logic)
-            # Note: Player speed scaling is usually done in MovementSystem, but base val is here.
-            # If we want Director to scale BASE attributes on spawn:
-            pass 
+        self.entity_manager.add_component(entity_id, TransformComponent(
+            x, y, data.transform.width, data.transform.height, velocity
+        ))
         
         self.entity_manager.add_component(entity_id, TransformComponent(
             x, y, data.transform.width, data.transform.height, velocity
@@ -67,9 +61,7 @@ class EntityFactory:
         
         self.entity_manager.add_component(entity_id, HealthComponent(max_hp, max_hp))
 
-        # 4. Tags
-        for tag in data.tags:
-            self.entity_manager.add_component(entity_id, TagComponent(tag=tag))
+        # 4. Tags - REMOVED
 
         # 5. Marker Components (AI, PlayerInput)
         for comp_name in data.components:

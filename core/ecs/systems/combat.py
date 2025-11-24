@@ -3,7 +3,6 @@ from core.ecs.entity import EntityManager
 from core.ecs.component import (
     HealthComponent,
     TransformComponent,
-    TagComponent,
     PlayerInputComponent,
     AIComponent,
     ProjectileComponent,
@@ -33,6 +32,19 @@ class DamageSystem:
         elif self.entity_manager.get_component(caster_id, AIComponent):
             return self.director.state.enemy_damage_multiplier
         return 1.0
+    
+    def _is_valid_target(self, entity_id: int, target_group: str) -> bool:
+        """
+        Determines if an entity matches the target group based on its components.
+        Replaces TagComponent logic.
+        """
+        if target_group == "enemy":
+            # Target is enemy if it has AIComponent
+            return self.entity_manager.get_component(entity_id, AIComponent) is not None
+        elif target_group == "player":
+            # Target is player if it has PlayerInputComponent
+            return self.entity_manager.get_component(entity_id, PlayerInputComponent) is not None
+        return False
 
     def on_area_damage(self, event: ApplyAreaDamageEvent) -> None:
         effect_data = event.effect_data
@@ -47,11 +59,11 @@ class DamageSystem:
         final_damage = int(base_damage * multiplier)
         if final_damage <= 0: return
 
-        targets = self.entity_manager.get_entities_with_components(HealthComponent, TransformComponent, TagComponent)
-        for target_id, (health, transform, tag) in targets:
+        targets = self.entity_manager.get_entities_with_components(HealthComponent, TransformComponent)
+        for target_id, (health, transform) in targets:
             if target_id == event.caster_id: continue
             
-            if tag.tag == effect_data.target_tag:
+            if self._is_valid_target(target_id, effect_data.target_group):
                 distance = math.hypot(caster_pos[0] - transform.x, caster_pos[1] - transform.y)
                 if distance <= effect_data.radius:
                     health.current_hp -= final_damage
@@ -77,6 +89,14 @@ class ProjectileImpactSystem:
         self.event_manager = event_manager
         self.entity_manager = entity_manager
 
+    def _is_valid_target(self, entity_id: int, target_group: str) -> bool:
+        """Duplicated logic for now, could be moved to a static helper or Entity utils."""
+        if target_group == "enemy":
+            return self.entity_manager.get_component(entity_id, AIComponent) is not None
+        elif target_group == "player":
+            return self.entity_manager.get_component(entity_id, PlayerInputComponent) is not None
+        return False
+    
     def update(self) -> None:
         projectiles = list(
             self.entity_manager.get_entities_with_components(
@@ -85,22 +105,18 @@ class ProjectileImpactSystem:
         )
         targets = list(
             self.entity_manager.get_entities_with_components(
-                HealthComponent, TransformComponent, TagComponent
+                HealthComponent, TransformComponent
             )
         )
 
         for proj_id, (proj, proj_trans, proj_damage) in projectiles:
-            for target_id, (health, target_trans, tag) in targets:
-                if tag.tag != proj_damage.target_tag:
+            for target_id, (health, target_trans) in targets:
+                
+                if not self._is_valid_target(target_id, proj_damage.target_group):
                     continue
 
                 # Simple collision check
-                if (
-                    math.hypot(proj_trans.x - target_trans.x, proj_trans.y - target_trans.y)
-                    < target_trans.width
-                ):
-                    self.event_manager.post(
-                        ApplyDirectDamageEvent(proj.caster_id, target_id, proj_damage.damage)
-                    )
+                if math.hypot(proj_trans.x - target_trans.x, proj_trans.y - target_trans.y) < target_trans.width:
+                    self.event_manager.post(ApplyDirectDamageEvent(proj.caster_id, target_id, proj_damage.damage))
                     self.event_manager.post(RequestEntityRemovalEvent(proj_id))
                     break

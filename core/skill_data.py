@@ -42,7 +42,7 @@ class AreaDamageEffectData(EffectData):
 
     radius: float
     damage: int
-    target_tag: str
+    target_group: str
 
 
 @dataclass
