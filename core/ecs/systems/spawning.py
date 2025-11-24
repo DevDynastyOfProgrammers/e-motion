@@ -1,5 +1,6 @@
 import random
 import math
+from loguru import logger
 from typing import Dict
 from core.ecs.entity import EntityManager
 from core.ecs.factory import EntityFactory
@@ -58,11 +59,12 @@ class EnemySpawningSystem:
 
     def _spawn_single_enemy(self) -> None:
         x, y = self._get_random_offscreen_position()
+        logger.debug(f"Spawning single enemy at ({x}, {y})")
         self.factory.create_enemy(x, y)
 
     def _spawn_enemy_group(self) -> None:
         center_x, center_y = self._get_random_offscreen_position()
-        print(f"Spawning GROUP of {self.group_size} enemies around ({center_x}, {center_y})")
+        logger.debug(f"Spawning GROUP of {self.group_size} enemies around ({center_x}, {center_y})")
         for _ in range(self.group_size):
             offset_x = random.uniform(-self.group_spawn_radius, self.group_spawn_radius)
             offset_y = random.uniform(-self.group_spawn_radius, self.group_spawn_radius)
@@ -94,7 +96,7 @@ class ProjectileSpawningSystem:
         
         projectile_data = self.projectile_definitions.get(event.effect_data.projectile_id)
         if not projectile_data:
-            print(f"ERROR: Unknown projectile_id '{event.effect_data.projectile_id}'")
+            logger.error(f"Unknown projectile_id '{event.effect_data.projectile_id}'")
             return
 
         direction = (1.0, 0.0)

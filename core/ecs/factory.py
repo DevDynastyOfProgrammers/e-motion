@@ -1,4 +1,5 @@
 from typing import Type
+from loguru import logger
 from core.ecs.entity import EntityManager
 from core.director import GameDirector
 from core.ecs.component import (
@@ -36,6 +37,7 @@ class EntityFactory:
         """
         data = self.entity_definitions.get(config_key)
         if not data:
+            logger.error(f"CRITICAL: Entity definition '{config_key}' not found!")
             return self.entity_manager.create_entity()
 
         entity_id = self.entity_manager.create_entity()
@@ -109,6 +111,6 @@ class EntityFactory:
                 component = comp_class(**comp_args) # type: ignore
                 self.entity_manager.add_component(proj_id, component)
             else:
-                print(f"WARNING: Unknown component type '{comp_name}' in projectile '{projectile_data.projectile_id}'")
+                logger.warning(f"Unknown component type '{comp_name}' in projectile '{projectile_data.projectile_id}'")
 
         return proj_id

@@ -1,4 +1,5 @@
 import math
+from loguru import logger
 from core.ecs.entity import EntityManager
 from core.ecs.component import (
     HealthComponent,
@@ -67,7 +68,7 @@ class DamageSystem:
                 distance = math.hypot(caster_pos[0] - transform.x, caster_pos[1] - transform.y)
                 if distance <= effect_data.radius:
                     health.current_hp -= final_damage
-                    # print(f"Entity {target_id} took {final_damage} AREA damage! HP: {health.current_hp}")
+                    logger.debug(f"Entity {target_id} took {final_damage} AREA damage! HP: {health.current_hp}") 
 
     def on_direct_damage(self, event: ApplyDirectDamageEvent) -> None:
         health = self.entity_manager.get_component(event.target_id, HealthComponent)
@@ -79,7 +80,7 @@ class DamageSystem:
                 return
 
             health.current_hp -= final_damage
-            # print(f"Entity {event.target_id} took {final_damage} DIRECT damage! HP: {health.current_hp}")
+            logger.debug(f"Entity {event.target_id} took {final_damage} DIRECT damage! HP: {health.current_hp}")
 
 
 class ProjectileImpactSystem:

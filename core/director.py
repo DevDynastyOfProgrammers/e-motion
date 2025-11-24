@@ -51,4 +51,4 @@ class GameDirector:
         if isinstance(vector, GameStateVector):
             self._target_state = vector
         else:
-            print(f"WARNING: Director received invalid state object: {type(vector)}")
+            logger.warning(f"Director received invalid state object: {type(vector)}")

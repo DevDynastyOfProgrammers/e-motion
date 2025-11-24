@@ -1,4 +1,5 @@
 from typing import Dict
+from loguru import logger
 from core.ecs.entity import EntityManager
 from core.ecs.component import SkillSetComponent, TransformComponent
 from core.event_manager import EventManager
@@ -84,7 +85,7 @@ class SkillExecutionSystem:
             return
 
         skill_set.cooldowns[event.skill_id] = skill_data.cooldown
-        # print(f"Executing skill '{skill_data.skill_id}' for entity {event.entity_id}")
+        logger.debug(f"Entity {event.entity_id} activated skill '{event.skill_id}' with cooldown {skill_data.cooldown}.")
 
         for effect in skill_data.effects:
             if isinstance(effect, AreaDamageEffectData):

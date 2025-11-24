@@ -1,5 +1,6 @@
 import yaml
 from typing import Type
+from loguru import logger
 from core.skill_data import (
     SkillData, ProjectileData, EffectData, AreaDamageEffectData, 
     SpawnProjectileEffectData, AnyTriggerData, AutoOnCooldownTriggerData, 
@@ -20,12 +21,12 @@ class DataLoader:
     # load entity info
     def load_entities(self, file_path: str) -> dict[str, EntityData]:
         """Loads entity definitions (Player, Enemy) from YAML."""
-        print(f"Loading entity data from: {file_path}")
+        logger.info(f"Loading entity data from: {file_path}")
         try:
             with open(file_path, 'r') as f:
                 raw_data = yaml.safe_load(f)
         except (FileNotFoundError, yaml.YAMLError) as e:
-            print(f"ERROR: Failed to load entities from '{file_path}': {e}")
+            logger.error(f"Failed to load entities from '{file_path}': {e}")
             return {}
 
         entities: dict[str, EntityData] = {}
@@ -59,22 +60,22 @@ class DataLoader:
                 )
                 entities[key] = entity
             except (KeyError, ValueError) as e:
-                print(f"WARNING: Skipping invalid entity definition '{key}': {e}")
+                logger.warning(f"Skipping invalid entity definition '{key}': {e}")
 
-        print(f"Successfully loaded {len(entities)} entity definitions.")
+        logger.info(f"Successfully loaded {len(entities)} entity definitions.")
         return entities
 
     # load skills and projectiles info
     def load_game_data(self, file_path: str) -> tuple[dict[str, SkillData], dict[str, ProjectileData]]:
-        print(f"Loading all game data from: {file_path}")
+        logger.info(f"Loading all game data from: {file_path}")
         try:
             with open(file_path, "r") as f:
                 raw_data = yaml.safe_load(f)
         except FileNotFoundError:
-            print(f"ERROR: Data file not found at '{file_path}'")
+            logger.error(f"Data file not found at '{file_path}'")
             return {}, {}
         except yaml.YAMLError as e:
-            print(f"ERROR: Failed to parse YAML file at '{file_path}': {e}")
+            logger.error(f"Failed to parse YAML file at '{file_path}': {e}")
             return {}, {}
 
         skills = self._load_skills(raw_data)
@@ -102,7 +103,7 @@ class DataLoader:
                     try:
                         effects_data.append(self._parse_effect(effect_dict))
                     except ValueError as e:
-                        print(f"WARNING: Skipping invalid effect in skill '{skill_id}': {e}")
+                        logger.warning(f"Skipping invalid effect in skill '{skill_id}': {e}")
 
             # Parse trigger
             trigger_data: AnyTriggerData | None = None
@@ -110,7 +111,7 @@ class DataLoader:
                 try:
                     trigger_data = self._parse_trigger(skill_info["trigger"])
                 except ValueError as e:
-                    print(f"WARNING: Skipping invalid trigger in skill '{skill_id}': {e}")
+                    logger.warning(f"Skipping invalid trigger in skill '{skill_id}': {e}")
 
             # Create SkillData object
             skill_data = SkillData(
@@ -121,7 +122,7 @@ class DataLoader:
             )
             all_skill_data[skill_id] = skill_data
 
-        print(f"Successfully loaded {len(all_skill_data)} skills.")
+        logger.success(f"Successfully loaded {len(all_skill_data)} skills.")
         return all_skill_data
 
     def _load_projectiles(self, raw_data: dict[str, object]) -> dict[str, ProjectileData]:
@@ -135,7 +136,7 @@ class DataLoader:
                 )
                 all_projectile_data[proj_id] = projectile_data
 
-        print(f"Successfully loaded {len(all_projectile_data)} projectiles.")
+        logger.success(f"Successfully loaded {len(all_projectile_data)} projectiles.")
         return all_projectile_data
 
     def _parse_trigger(self, trigger_data: dict[str, object]) -> AnyTriggerData:

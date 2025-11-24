@@ -86,7 +86,7 @@ class EmotionRecognitionSystem:
                 new_emotion = self.model.predict(np.zeros((1, 1)))
 
             # 3. Broadcast
-            # logger.debug(f"Detected emotion: {new_emotion.name}")
+            logger.debug(f"[AI MODEL] Inference result: {new_emotion.name}")
             self.event_manager.post(EmotionStateChangedEvent(new_emotion))
 
 
@@ -159,7 +159,7 @@ class GameplayMappingSystem:
                 self._emotion_to_vector_map[Emotion.NEUTRAL]
             )
             
-            logger.info(f"[MAPPING] Emotion '{self._current_emotion.name}' -> Updating Game State")
+            logger.debug(f"[MAPPING] Emotion '{self._current_emotion.name}' -> Updating Game State")
             self.director.set_new_target_vector(target_vector)
 
     def get_current_emotion_name(self) -> str:
