@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import List, Union, Dict, Any, Optional
 
 @dataclass
 class TriggerData:
@@ -16,15 +15,12 @@ class PeriodicTriggerData(TriggerData):
     """Trigger type: PERIODIC"""
     interval: float
 
-AnyTriggerData = Union[AutoOnCooldownTriggerData, PeriodicTriggerData]
+AnyTriggerData = AutoOnCooldownTriggerData | PeriodicTriggerData
 
 @dataclass
 class EffectData:
     """
     Base dataclass for all skill effect data.
-    Acts as an interface to ensure all effects can be treated polymorphically.
-    Every effect 'type' defined in skills.yaml must have a corresponding
-    subclass inheriting from this.
     """
     pass
 
@@ -32,34 +28,28 @@ class EffectData:
 class AreaDamageEffectData(EffectData):
     """
     Data for an effect that deals damage in a radius around the caster.
-    Maps to 'type: AREA_DAMAGE' in YAML.
     """
     radius: float
     damage: int
-    # TODO: Target by a component type, not by string tag
-    # e.g., Target by PlayerInputComponent or AIComponent
     target_tag: str
 
 @dataclass
 class SpawnProjectileEffectData(EffectData):
     """
     Data for an effect that spawns a projectile.
-    Maps to 'type: SPAWN_PROJECTILE' in YAML.
     """
     projectile_id: str
     target_logic: str
 
-# A type hint for clarity, allowing any of the defined effect data classes.
-AnyEffectData = Union[AreaDamageEffectData, SpawnProjectileEffectData]
+AnyEffectData = AreaDamageEffectData | SpawnProjectileEffectData
 
 @dataclass
 class ProjectileData:
     """
-    Represents the static configuration for a single projectile,
-    loaded from the ProjectileDefinitions section of skills.yaml.
+    Represents the static configuration for a single projectile.
     """
     projectile_id: str
-    components: Dict[str, Dict[str, Any]] # e.g., {"Transform": {"width": 10, ...}}
+    components: dict[str, dict[str, object]] 
 
 @dataclass
 class SkillData:
@@ -68,5 +58,5 @@ class SkillData:
     """
     skill_id: str
     cooldown: float = 0.0
-    trigger: Optional[AnyTriggerData] = None
-    effects: List[AnyEffectData] = field(default_factory=list)
+    trigger: AnyTriggerData | None = None
+    effects: list[AnyEffectData] = field(default_factory=list)

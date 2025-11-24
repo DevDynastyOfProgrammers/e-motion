@@ -1,10 +1,35 @@
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+def get_env_int(key: str, default: int) -> int:
+    """Helper to read an int from env with a default fallback."""
+    value = os.getenv(key)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        print(f"WARNING: Invalid integer for {key}={value}. Using default {default}.")
+        return default
+
+def get_env_str(key: str, default: str) -> str:
+    """Helper to read a string from env with a default fallback."""
+    return os.getenv(key, default)
+
 # Window settings
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
-FPS = 60
+SCREEN_WIDTH: int = get_env_int("SCREEN_WIDTH", 1280)
+SCREEN_HEIGHT: int = get_env_int("SCREEN_HEIGHT", 720)
+FPS: int = get_env_int("FPS", 60)
 
 # Game settings
-PLAYER_VELOCITY = 250
-ENEMY_VELOCITY = 150
+PLAYER_VELOCITY: int = get_env_int("PLAYER_VELOCITY", 250)
+ENEMY_VELOCITY: int = get_env_int("ENEMY_VELOCITY", 150)
 
-# TODO : Add more settings for entity characteristics (health, damage, spells, etc.)
+# System settings
+LOG_LEVEL: str = get_env_str("LOG_LEVEL", "INFO")
+
+# Debug print to verify loading (Temporary)
+print(f"[CONFIG] Loaded: {SCREEN_WIDTH}x{SCREEN_HEIGHT} @ {FPS}FPS | Log: {LOG_LEVEL}")
