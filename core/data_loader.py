@@ -62,7 +62,7 @@ class DataLoader:
             except (KeyError, ValueError) as e:
                 logger.warning(f"Skipping invalid entity definition '{key}': {e}")
 
-        logger.info(f"Successfully loaded {len(entities)} entity definitions.")
+        logger.success(f"Successfully loaded {len(entities)} entity definitions.")
         return entities
 
     # load skills and projectiles info
