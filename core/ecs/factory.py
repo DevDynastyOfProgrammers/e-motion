@@ -1,5 +1,6 @@
 # core/ecs/factory.py
 
+from typing import Type
 from core.ecs.entity import EntityManager
 from core.director import GameDirector
 from core.ecs.component import (
@@ -8,15 +9,22 @@ from core.ecs.component import (
     LifetimeComponent, SkillSetComponent, ProjectileComponent, Component
 )
 from core.skill_data import ProjectileData
-from typing import Type
+from core.entity_data import EntityData # <-- Import
 
 class EntityFactory:
     """
-    A factory for creating pre-configured game entities.
+    A factory for creating pre-configured game entities using Data-Driven design.
     """
-    def __init__(self, entity_manager: EntityManager, director: GameDirector) -> None:
+    def __init__(
+        self, 
+        entity_manager: EntityManager, 
+        director: GameDirector,
+        entity_definitions: dict[str, EntityData] # <-- Inject Data
+    ) -> None:
         self.entity_manager = entity_manager
-        self.director = director # Injected director dependency
+        self.director = director 
+        self.entity_definitions = entity_definitions
+        
         self.component_map: dict[str, Type[Component]] = {
             "Transform": TransformComponent,
             "Render": RenderComponent,
@@ -24,34 +32,63 @@ class EntityFactory:
             "Lifetime": LifetimeComponent,
         }
 
+    def _assemble_entity(self, x: float, y: float, config_key: str, is_enemy: bool = False) -> int:
+        """
+        Generic builder that assembles an entity from a configuration key.
+        """
+        data = self.entity_definitions.get(config_key)
+        if not data:
+            print(f"CRITICAL ERROR: Entity definition '{config_key}' not found!")
+            # Return a valid ID to avoid crash, but it will be empty (or raise Error)
+            return self.entity_manager.create_entity()
+
+        entity_id = self.entity_manager.create_entity()
+
+        # 1. Transform & Velocity
+        velocity = data.transform.velocity
+        if is_enemy:
+            # Apply Director Multiplier only for enemies (or adapt logic)
+            # Note: Player speed scaling is usually done in MovementSystem, but base val is here.
+            # If we want Director to scale BASE attributes on spawn:
+            pass 
+        
+        self.entity_manager.add_component(entity_id, TransformComponent(
+            x, y, data.transform.width, data.transform.height, velocity
+        ))
+
+        # 2. Render
+        self.entity_manager.add_component(entity_id, RenderComponent(color=data.color))
+
+        # 3. Health
+        max_hp = data.max_hp
+        if is_enemy:
+            health_multiplier = self.director.get_enemy_health_multiplier()
+            max_hp = int(max_hp * health_multiplier)
+        
+        self.entity_manager.add_component(entity_id, HealthComponent(max_hp, max_hp))
+
+        # 4. Tags
+        for tag in data.tags:
+            self.entity_manager.add_component(entity_id, TagComponent(tag=tag))
+
+        # 5. Marker Components (AI, PlayerInput)
+        for comp_name in data.components:
+            if comp_name == "PlayerInput":
+                self.entity_manager.add_component(entity_id, PlayerInputComponent())
+            elif comp_name == "AI":
+                self.entity_manager.add_component(entity_id, AIComponent())
+        
+        # 6. Skills
+        if data.skills:
+            self.entity_manager.add_component(entity_id, SkillSetComponent(skill_ids=data.skills))
+
+        return entity_id
+
     def create_player(self, x: float, y: float) -> int:
-        player_id = self.entity_manager.create_entity()
-        
-        self.entity_manager.add_component(player_id, TransformComponent(x, y, 30, 30, velocity=200))
-        self.entity_manager.add_component(player_id, RenderComponent(color=(0, 150, 255)))
-        self.entity_manager.add_component(player_id, PlayerInputComponent())
-        self.entity_manager.add_component(player_id, HealthComponent(100, 100))
-        self.entity_manager.add_component(player_id, TagComponent(tag="player"))
-        self.entity_manager.add_component(player_id, SkillSetComponent(skill_ids=["PlayerAura", "Fireball", "Iceball"]))
-        
-        return player_id
+        return self._assemble_entity(x, y, "Player", is_enemy=False)
 
     def create_enemy(self, x: float, y: float) -> int:
-        enemy_id = self.entity_manager.create_entity()
-        
-        # Apply health multiplier from director
-        base_health = 50
-        health_multiplier = self.director.get_enemy_health_multiplier()
-        final_health = int(base_health * health_multiplier)
-
-        self.entity_manager.add_component(enemy_id, TransformComponent(x, y, 25, 25, velocity=100))
-        self.entity_manager.add_component(enemy_id, RenderComponent(color=(255, 50, 50)))
-        self.entity_manager.add_component(enemy_id, AIComponent())
-        self.entity_manager.add_component(enemy_id, HealthComponent(final_health, final_health))
-        self.entity_manager.add_component(enemy_id, TagComponent(tag="enemy"))
-        self.entity_manager.add_component(enemy_id, SkillSetComponent(skill_ids=["EnemyAura"]))
-
-        return enemy_id
+        return self._assemble_entity(x, y, "Enemy", is_enemy=True)
 
     def create_projectile(
         self, 

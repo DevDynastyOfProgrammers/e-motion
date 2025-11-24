@@ -1,38 +1,71 @@
 import yaml
 from typing import Type
 from core.skill_data import (
-    SkillData,
-    ProjectileData,
-    EffectData,
-    AreaDamageEffectData,
-    SpawnProjectileEffectData,
-    AutoOnCooldownTriggerData,
-    PeriodicTriggerData,
-    AnyTriggerData,
-    AnyEffectData,
+    SkillData, ProjectileData, EffectData, AreaDamageEffectData, 
+    SpawnProjectileEffectData, AnyTriggerData, AutoOnCooldownTriggerData, 
+    PeriodicTriggerData, AnyEffectData
 )
-
+from core.entity_data import EntityData, EntityTransformData # <-- NEW IMPORT
 
 class DataLoader:
     """
     Loads and parses all game data definitions from YAML files.
     """
-
     def __init__(self) -> None:
         self._effect_factory: dict[str, Type[EffectData]] = {
             "AREA_DAMAGE": AreaDamageEffectData,
             "SPAWN_PROJECTILE": SpawnProjectileEffectData,
         }
 
-    def load_game_data(
-        self, file_path: str
-    ) -> tuple[dict[str, SkillData], dict[str, ProjectileData]]:
-        """
-        Parses a YAML file for both skills and projectiles.
+    # load entity info
+    def load_entities(self, file_path: str) -> dict[str, EntityData]:
+        """Loads entity definitions (Player, Enemy) from YAML."""
+        print(f"Loading entity data from: {file_path}")
+        try:
+            with open(file_path, 'r') as f:
+                raw_data = yaml.safe_load(f)
+        except (FileNotFoundError, yaml.YAMLError) as e:
+            print(f"ERROR: Failed to load entities from '{file_path}': {e}")
+            return {}
 
-        :param file_path: The path to the data file (skills.yaml).
-        :return: A tuple containing (dict_of_skills, dict_of_projectiles).
-        """
+        entities: dict[str, EntityData] = {}
+        if not isinstance(raw_data, dict):
+            return {}
+
+        for key, value in raw_data.items():
+            if not isinstance(value, dict): continue
+            
+            try:
+                # Parse Transform
+                t_data = value['transform']
+                transform = EntityTransformData(
+                    width=float(t_data['width']),
+                    height=float(t_data['height']),
+                    velocity=float(t_data['velocity'])
+                )
+                
+                # Parse Render
+                color_list = value['render']['color']
+                color = (int(color_list[0]), int(color_list[1]), int(color_list[2]))
+
+                entity = EntityData(
+                    id=key,
+                    transform=transform,
+                    max_hp=int(value['health']['max_hp']),
+                    color=color,
+                    tags=value.get('tags', []),
+                    components=value.get('components', []),
+                    skills=value.get('skills', [])
+                )
+                entities[key] = entity
+            except (KeyError, ValueError) as e:
+                print(f"WARNING: Skipping invalid entity definition '{key}': {e}")
+
+        print(f"Successfully loaded {len(entities)} entity definitions.")
+        return entities
+
+    # load skills and projectiles info
+    def load_game_data(self, file_path: str) -> tuple[dict[str, SkillData], dict[str, ProjectileData]]:
         print(f"Loading all game data from: {file_path}")
         try:
             with open(file_path, "r") as f:
@@ -52,7 +85,6 @@ class DataLoader:
     def _load_skills(self, raw_data: dict[str, object]) -> dict[str, SkillData]:
         """Loads all skill definitions from the raw YAML data."""
         all_skill_data: dict[str, SkillData] = {}
-        # Ensure we are iterating over a dictionary
         if not isinstance(raw_data, dict):
             return {}
 
@@ -93,16 +125,10 @@ class DataLoader:
         return all_skill_data
 
     def _load_projectiles(self, raw_data: dict[str, object]) -> dict[str, ProjectileData]:
-        """Loads all projectile definitions from the raw YAML data."""
         all_projectile_data: dict[str, ProjectileData] = {}
-
-        if "ProjectileDefinitions" in raw_data and isinstance(
-            raw_data["ProjectileDefinitions"], dict
-        ):
+        if "ProjectileDefinitions" in raw_data and isinstance(raw_data["ProjectileDefinitions"], dict):
             for proj_id, proj_info in raw_data["ProjectileDefinitions"].items():
-                if not isinstance(proj_info, dict):
-                    continue
-
+                if not isinstance(proj_info, dict): continue  
                 projectile_data = ProjectileData(
                     projectile_id=proj_id,
                     components=proj_info.get("components", {}),  # type: ignore

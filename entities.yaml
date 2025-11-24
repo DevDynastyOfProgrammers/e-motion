@@ -1,0 +1,28 @@
+# Definition of base entity stats.
+# This removes magic numbers from factory.py
+
+Player:
+  transform:
+    width: 30
+    height: 30
+    velocity: 250 # Was PLAYER_VELOCITY in settings
+  health:
+    max_hp: 100
+  render:
+    color: [0, 150, 255] # Blue
+  tags: ["player"]
+  components: ["PlayerInput"]
+  skills: ["PlayerAura", "Fireball", "Iceball"]
+
+Enemy:
+  transform:
+    width: 25
+    height: 25
+    velocity: 150 # Was ENEMY_VELOCITY in settings
+  health:
+    max_hp: 50
+  render:
+    color: [255, 50, 50] # Red
+  tags: ["enemy"]
+  components: ["AI"]
+  skills: ["EnemyAura"]

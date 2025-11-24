@@ -31,7 +31,7 @@ class GameplayState:
     Main gameplay state implementing the GameState Protocol.
     """
 
-    def __init__(self, state_manager):
+    def __init__(self, state_manager) -> None:
         self.state_manager = state_manager
 
         self.entity_manager = EntityManager()
@@ -39,11 +39,15 @@ class GameplayState:
         self.director = GameDirector()
 
         data_loader = DataLoader()
-        self.skill_definitions, self.projectile_definitions = data_loader.load_game_data(
-            "skills.yaml"
+        self.skill_definitions, self.projectile_definitions = data_loader.load_game_data("skills.yaml")
+        self.entity_definitions = data_loader.load_entities("entities.yaml")
+        
+        # --- FACTORY INJECTION ---
+        self.entity_factory = EntityFactory(
+            self.entity_manager, 
+            self.director, 
+            self.entity_definitions # Pass the loaded data
         )
-
-        self.entity_factory = EntityFactory(self.entity_manager, self.director)
 
         # --- System Initialization ---
         self.render_system = RenderSystem()
