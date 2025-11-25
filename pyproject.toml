@@ -23,9 +23,7 @@ dev = [
 ]
 
 [tool.mypy]
-python_version = "3.10"
-# temorarily disabled
-# strict = true
+python_version = "3.13"
 explicit_package_bases = true
 ignore_missing_imports = true
 exclude = [".venv", "build", "dist"]
@@ -36,5 +34,5 @@ disallow_incomplete_defs = true    # But if you start typing, do it to the end
 check_untyped_defs = true          # Check the body of untyped functions
 
 [tool.ruff]
-line-length = 100
-target-version = "py310"
+line-length = 120
+target-version = "py313"
