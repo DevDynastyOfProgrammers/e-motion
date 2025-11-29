@@ -327,3 +327,63 @@ class AdvancedCosineTrainer:
 
         fig.write_html(save_path)
         logger.info(f"📊 Advanced performance analysis plot saved to {save_path}")
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+    
+    # Configure logging
+    logger.remove()
+    logger.add(sys.stdout, format="<green>{time:HH:mm:ss}</green> | <level>{message}</level>", level="INFO")
+
+    logger.info("🚀 Starting Model Training...")
+
+    # 1. Locate CSV
+    possible_paths = [
+        "train/emotional_balance_dataset.csv", # User defined path
+        "ml/state/data/train/emotional_balance_dataset.csv", # Standard structure
+        "data/train/emotional_balance_dataset.csv",
+        data_config.data_path
+    ]
+    
+    csv_path = None
+    for p in possible_paths:
+        if Path(p).exists():
+            csv_path = p
+            break
+            
+    if not csv_path:
+        logger.error(f"❌ Dataset not found! Checked: {possible_paths}")
+        logger.error("Please run generator first: uv run python -m ml.state.data_pipeline.generator")
+        sys.exit(1)
+
+    logger.info(f"📁 Loading dataset from: {csv_path}")
+    
+    try:
+        # Load Data
+        df = pd.read_csv(csv_path, delimiter=";")
+        
+        logger.info("🔄 Remapping granular presets to groups...")
+        df["preset"] = df["preset"].apply(PresetMapping.remap_preset)
+        
+        # Verify we have data for groups now
+        unique_presets = df["preset"].unique()
+        logger.info(f"Found presets in data: {unique_presets}")
+        # -----------------------------------
+        
+        # 2. Ensure save directory exists
+        save_dir = Path(data_config.prototypes_save_path).parent
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        # 3. Train
+        trainer = AdvancedCosineTrainer()
+        trainer.train(df)
+        
+        logger.success(f"🎉 Training complete! Prototypes saved to: {data_config.prototypes_save_path}")
+        
+    except Exception as e:
+        logger.error(f"💥 Training failed: {e}")
+        # Print full traceback for debugging
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

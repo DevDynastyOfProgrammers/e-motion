@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"
 
 
 @dataclass(frozen=True)
@@ -35,9 +36,9 @@ class CosineModelConfig:
 class DataConfig:
     """Configuration for data handling."""
 
-    data_path: str = "data/train/emotional_balance_dataset.csv"
-    model_save_path: str = "data/models/synthetic_cosine_emotion_classifier.pkl"
-    prototypes_save_path: str = "data/models/synthetic_reset_prototypes.npy"
+    data_path: str = "ml/state/data/train/emotional_balance_dataset.csv"
+    model_save_path: str = "ml/state/data/models/synthetic_cosine_emotion_classifier.pkl"
+    prototypes_save_path: str = "ml/state/data/models/synthetic_reset_prototypes.npy"
     plots_dir: str = "logs/plots"
     test_size: float = 0.2
     random_state: int = 42

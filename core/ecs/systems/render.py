@@ -20,66 +20,119 @@ class RenderSystem:
 class DebugRenderSystem:
     """
     Renders real-time debug information about ML and Game State.
-    Listens to EventManager to get the latest emotion.
+    Visualizes emotion probabilities as bars and shows the active Game Preset.
     """
 
     def __init__(self, director: GameDirector, event_manager: EventManager) -> None:
         self.director = director
         self.event_manager = event_manager
         
-        self.font = pygame.font.Font(None, 24)
+        self.font = pygame.font.Font(None, 20)
+        self.title_font = pygame.font.Font(None, 28)
         self.color = (255, 255, 255)
+        
+        # UI Layout
         self.x_offset = 10
         self.y_offset = 10
-        self.line_height = 20
+        self.bar_width = 100
+        self.bar_height = 10
         
-        # Храним последнюю эмоцию локально для отрисовки
-        self.last_emotion_name = "Waiting..."
-        self.last_confidence = 0.0
+        # Data storage
+        self.last_prediction = None
+        self.current_preset = "Unknown"
         
-        # Подписываемся на обновление эмоций
+        # Subscribe
         self.event_manager.subscribe(EmotionStateChangedEvent, self._on_emotion_update)
 
     def _on_emotion_update(self, event: EmotionStateChangedEvent):
-        self.last_emotion_name = event.prediction.dominant_emotion.name
-        self.last_confidence = event.prediction.confidence
+        self.last_prediction = event.prediction
+        # We assume the last computed multipliers reflect the current preset
+        # Ideally, we would pass the preset name in an event, but for debug we can infer or wait
+        pass
 
     def draw(self, screen: pygame.Surface) -> None:
-        lines = []
+        # Background box for readability
+        bg_rect = pygame.Rect(5, 5, 250, 400)
+        s = pygame.Surface((bg_rect.width, bg_rect.height))
+        s.set_alpha(180)
+        s.fill((0, 0, 0))
+        screen.blit(s, (bg_rect.x, bg_rect.y))
 
-        # 1. ML Info
-        lines.append(f"--- BIOFEEDBACK ---")
-        lines.append(f"Emotion: {self.last_emotion_name} ({self.last_confidence:.2f})")
-        lines.append("")
-
-        # 2. Director Info (Interpolation)
-        current_state = self.director.state
-        target_state = self.director.target_state
-
-        lines.append(f"--- GAME STATE (Current -> Target) ---")
-        
-        # Динамически проходим по полям датакласса
-        for field in fields(current_state):
-            name = field.name
-            cur_val = getattr(current_state, name)
-            tgt_val = getattr(target_state, name)
-            
-            # Форматируем имя: enemy_speed_multiplier -> Enemy Speed
-            pretty_name = name.replace("_multiplier", "").replace("_modifier", "").replace("_", " ").title()
-            
-            # Красим строку, если значение отличается от 1.0 (активный модификатор)
-            prefix = " "
-            if abs(cur_val - 1.0) > 0.01:
-                prefix = "*" 
-            
-            lines.append(f"{prefix} {pretty_name:<18}: {cur_val:5.2f} -> {tgt_val:5.2f}")
-
-        # Рендеринг текста
         y = self.y_offset
-        for line in lines:
-            text_surf = self.font.render(line, True, self.color)
-            # Добавляем черную обводку для читаемости
-            outline_surf = self.font.render(line, True, (0,0,0))
-            screen.blit(outline_surf, (self.x_offset + 1, y + 1))
-            screen.blit(text_surf, (self.x_offset, y))
-            y += self.line_height
+
+        # --- 1. Vision Model Outputs ---
+        self._draw_text(screen, "VISION MODEL (Smoothed)", y, self.title_font)
+        y += 25
+
+        if self.last_prediction:
+            probs = [
+                ("Angry", self.last_prediction.prob_angry_disgust, (255, 50, 50)),
+                ("Fear", self.last_prediction.prob_fear_surprise, (200, 50, 200)),
+                ("Happy", self.last_prediction.prob_happy, (50, 255, 50)),
+                ("Neutral", self.last_prediction.prob_neutral, (200, 200, 200)),
+                ("Sad", self.last_prediction.prob_sad, (50, 100, 255)),
+            ]
+
+            for name, val, color in probs:
+                self._draw_bar(screen, self.x_offset, y, name, val, color)
+                y += 18
+        else:
+            self._draw_text(screen, "Waiting for camera...", y)
+            y += 30
+
+        y += 10
+        
+        # --- 2. State Director ---
+        # Get target multipliers to see what we are aiming for
+        target = self.director.target_state
+        current = self.director.state
+        
+        self._draw_text(screen, "STATE DIRECTOR", y, self.title_font)
+        y += 25
+        
+        # Interpolation Progress (Visual guess based on one param)
+        diff = abs(target.spawn_rate_multiplier - current.spawn_rate_multiplier)
+        status = "Morphing..." if diff > 0.05 else "Stable"
+        self._draw_text(screen, f"Status: {status}", y)
+        y += 20
+
+        # Draw Multipliers
+        params = [
+            ("Spawn Rate", current.spawn_rate_multiplier, target.spawn_rate_multiplier),
+            ("Enemy Speed", current.enemy_speed_multiplier, target.enemy_speed_multiplier),
+            ("Enemy HP", current.enemy_health_multiplier, target.enemy_health_multiplier),
+            ("Player Dmg", current.player_damage_multiplier, target.player_damage_multiplier),
+        ]
+
+        for name, cur, tgt in params:
+            # Color logic: Red if getting harder (spawn up), Green if easier
+            color = (200, 200, 200)
+            if tgt > 1.05: color = (255, 100, 100) # Harder
+            if tgt < 0.95: color = (100, 255, 100) # Easier
+
+            text = f"{name}: {cur:.2f} -> {tgt:.2f}"
+            self._draw_text(screen, text, y, color=color)
+            y += 18
+
+    def _draw_bar(self, screen, x, y, label, value, color):
+        # Draw Label
+        text_surf = self.font.render(f"{label}", True, (255, 255, 255))
+        screen.blit(text_surf, (x, y))
+        
+        # Draw Bar Background
+        bar_x = x + 60
+        pygame.draw.rect(screen, (50, 50, 50), (bar_x, y + 2, self.bar_width, self.bar_height))
+        
+        # Draw Filled Bar
+        fill_width = int(value * self.bar_width)
+        pygame.draw.rect(screen, color, (bar_x, y + 2, fill_width, self.bar_height))
+        
+        # Draw Value Text
+        val_surf = self.font.render(f"{value:.2f}", True, (200, 200, 200))
+        screen.blit(val_surf, (bar_x + self.bar_width + 5, y))
+
+    def _draw_text(self, screen, text, y, font=None, color=None):
+        if font is None: font = self.font
+        if color is None: color = self.color
+        surf = font.render(text, True, color)
+        screen.blit(surf, (self.x_offset, y))

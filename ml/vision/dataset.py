@@ -7,12 +7,12 @@ import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from torch.utils.data import Dataset, DataLoader
-from core.ml.vision.models import EmotionCNN
-from core.ml.vision.config import IMG_SIZE
+from ml.vision.models import EmotionCNN
+from ml.vision.config import IMG_SIZE
 import torch
 import logging
 
-logger = logging.getLogger("core.ml.vision.dataset")
+logger = logging.getLogger("ml.vision.dataset")
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
 

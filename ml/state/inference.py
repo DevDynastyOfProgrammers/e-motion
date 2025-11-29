@@ -44,7 +44,7 @@ class StateDirector:
             
             # Создаем классификатор на основе загруженных прототипов
             self.classifier = AdvancedEmotionClassifier(analyzer)
-            logger.success(f"StateDirector model loaded successfully from {path}")
+            logger.info(f"StateDirector model loaded successfully from {path}")
         except Exception as e:
             logger.error(f"Failed to load StateDirector model: {e}")
             self.classifier = None
