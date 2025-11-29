@@ -13,3 +13,6 @@ ml/data/
 weights/
 fer2013/
 __pycache__/
+.DS_Store
+*.log
+.python-version

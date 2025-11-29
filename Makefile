@@ -1,8 +1,5 @@
-# Compatible with Linux and macOS
-
 .PHONY: help install run lint format clean
 
-# Default target
 help:
 	@echo "Available commands:"
 	@echo "  make install   - Install dependencies via uv"
@@ -19,12 +16,12 @@ run:
 
 lint:
 	@echo "Running Linter (Ruff)..."
-	uv run ruff check .
+	uv run ruff check --fix
 	@echo "Running Type Checker (MyPy)..."
 	uv run mypy .
 
 format:
-	uv run ruff format .
+	uv run ruff format
 
 clean:
 	rm -rf .venv
