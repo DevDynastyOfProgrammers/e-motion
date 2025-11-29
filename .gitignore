@@ -4,6 +4,15 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 *.pyc
+
+# ML data and weights
+*.pt
+*.pth
+*.ckpt
+ml/data/
+weights/
+fer2013/
+__pycache__/
 .DS_Store
 *.log
 .python-version
