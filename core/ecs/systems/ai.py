@@ -5,7 +5,7 @@ from core.emotion import Emotion
 from core.director import GameDirector, GameStateVector
 from core.event_manager import EventManager
 from core.events import EmotionStateChangedEvent
-from core.ml.wrapper import create_emotion_model, EmotionModel, RandomEmotionModel
+from ml.wrapper import create_emotion_model, EmotionModel, RandomEmotionModel
 from settings import EMOTION_MODEL_PATH
 
 try:
