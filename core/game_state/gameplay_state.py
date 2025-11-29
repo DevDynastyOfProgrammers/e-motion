@@ -96,9 +96,13 @@ class GameplayState:
         self.damage_system = DamageSystem(self.event_manager, self.entity_manager, self.director)
         self.death_system = DeathSystem(self.event_manager, self.entity_manager)
 
-        # Rendering
-        self.render_system = RenderSystem()
-        self.debug_render_system = DebugRenderSystem(self.director, self.event_manager)
+        # Rendering    
+        self.render_system = RenderSystem()    
+        self.debug_render_system = DebugRenderSystem(
+            self.director, 
+            self.event_manager, 
+            self.biofeedback_system
+        )
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         """Process raw PyGame events."""

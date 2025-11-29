@@ -62,6 +62,16 @@ class BiofeedbackWorker(threading.Thread):
                     # --- 2. Inference ---
                     # (Внутри _run_vision уже есть защита от None)
                     prediction = self._run_vision(frame)
+
+                    debug_frame = None
+                    if frame is not None:
+                        # 1. Resize to small thumbnail (e.g. 160x120) to save performance
+                        small_frame = cv2.resize(frame, (160, 120))
+                        # 2. Convert BGR to RGB for PyGame
+                        small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+                        # 3. Rotate correctly for PyGame (OpenCV is HxW, PyGame expects WxH)
+                        # We transpose axes 0 and 1
+                        debug_frame = np.transpose(small_frame, (1, 0, 2))
                     
                     # --- 3. Smoothing (EMA) ---
                     raw_probs = {
@@ -94,16 +104,20 @@ class BiofeedbackWorker(threading.Thread):
                         self.last_preset = state_result.preset_name
 
                     # --- 5. Send Results ---
-                    if self.result_queue.full():
-                        try:
-                            self.result_queue.get_nowait()
-                        except queue.Empty:
-                            pass
-                    
-                    self.result_queue.put({
-                        'emotion': smoothed_prediction,
-                        'state': state_result
-                    })
+                    try:
+                        if self.result_queue.full():
+                            try:
+                                self.result_queue.get_nowait()
+                            except queue.Empty:
+                                pass
+                        
+                        self.result_queue.put({
+                            'emotion': smoothed_prediction,
+                            'state': state_result,
+                            'frame': debug_frame
+                        })
+                    except Exception:
+                        pass
 
                 except Exception as e:
                     logger.error(f"⚠️ Error inside worker loop: {e}")
@@ -175,6 +189,7 @@ class BiofeedbackSystem:
         self.stop_event = threading.Event()
         self.worker = BiofeedbackWorker(self.result_queue, self.stop_event)
         self.worker.start()
+        self.current_debug_frame = None
 
     def update(self, delta_time: float):
         try:
@@ -185,6 +200,8 @@ class BiofeedbackSystem:
 
     def _apply_data(self, data):
         self.event_manager.post(EmotionStateChangedEvent(data['emotion']))
+        self.current_debug_frame = data.get('frame')
+        
         mults = data['state'].multipliers
         target = GameStateVector(
             spawn_rate_multiplier=mults.get("spawn_rate_multiplier", 1.0),

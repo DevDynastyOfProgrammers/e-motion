@@ -1,10 +1,15 @@
 import pygame
 from dataclasses import fields
+from typing import TYPE_CHECKING
+
 from core.ecs.entity import EntityManager
 from core.ecs.component import TransformComponent, RenderComponent
 from core.director import GameDirector
 from core.event_manager import EventManager
 from core.events import EmotionStateChangedEvent
+
+if TYPE_CHECKING:
+    from core.ecs.systems.biofeedback import BiofeedbackSystem
 
 class RenderSystem:
     """Renders all entities with TransformComponent and RenderComponent to the screen."""
@@ -23,9 +28,10 @@ class DebugRenderSystem:
     Visualizes emotion probabilities as bars and shows the active Game Preset.
     """
 
-    def __init__(self, director: GameDirector, event_manager: EventManager) -> None:
+    def __init__(self, director: GameDirector, event_manager: EventManager, bio_system: "BiofeedbackSystem") -> None:
         self.director = director
         self.event_manager = event_manager
+        self.bio_system = bio_system
         
         self.font = pygame.font.Font(None, 20)
         self.title_font = pygame.font.Font(None, 28)
@@ -51,14 +57,28 @@ class DebugRenderSystem:
         pass
 
     def draw(self, screen: pygame.Surface) -> None:
-        # Background box for readability
-        bg_rect = pygame.Rect(5, 5, 250, 400)
+        # Background
+        bg_rect = pygame.Rect(5, 5, 250, 550) # Увеличили высоту, чтобы влезла камера
         s = pygame.Surface((bg_rect.width, bg_rect.height))
         s.set_alpha(180)
         s.fill((0, 0, 0))
         screen.blit(s, (bg_rect.x, bg_rect.y))
 
         y = self.y_offset
+
+        # --- 0. CAMERA FEED ---
+        # Берем кадр из bio_system
+        if self.bio_system.current_debug_frame is not None:
+            try:
+                # numpy array -> pygame surface
+                frame_surf = pygame.surfarray.make_surface(self.bio_system.current_debug_frame)
+                screen.blit(frame_surf, (self.x_offset, y))
+                y += 130 # Смещаем текст вниз (высота картинки 120 + 10 отступ)
+            except Exception:
+                pass
+        else:
+            self._draw_text(screen, "[No Camera Feed]", y)
+            y += 30
 
         # --- 1. Vision Model Outputs ---
         self._draw_text(screen, "VISION MODEL (Smoothed)", y, self.title_font)
