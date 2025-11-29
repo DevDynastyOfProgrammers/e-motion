@@ -10,7 +10,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from config import data_config
+from ml.state.config import data_config
 from loguru import logger
 
 

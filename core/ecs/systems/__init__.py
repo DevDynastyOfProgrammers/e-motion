@@ -1,4 +1,5 @@
-from .ai import EmotionRecognitionSystem, GameplayMappingSystem
+# from .ai import EmotionRecognitionSystem, GameplayMappingSystem
+from .biofeedback import BiofeedbackSystem
 from .combat import DamageSystem, ProjectileImpactSystem
 from .input import PlayerInputSystem
 from .lifecycle import DeathSystem, LifetimeSystem
@@ -24,4 +25,5 @@ __all__ = [
     "SkillExecutionSystem",
     "EnemySpawningSystem",
     "ProjectileSpawningSystem",
+    "BiofeedbackSystem",
 ]

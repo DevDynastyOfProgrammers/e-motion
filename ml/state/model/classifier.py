@@ -3,9 +3,9 @@ Advanced similarity based model for emotion classification.
 """
 
 import numpy as np
-from config import cosine_config
 
-from model.analyzer import AdvancedPresetAnalyzer
+from ml.state.config import cosine_config
+from ml.state.model.analyzer import AdvancedPresetAnalyzer
 
 
 class AdvancedEmotionClassifier:

@@ -20,8 +20,7 @@ from core.ecs.systems import (
     ProjectileMovementSystem,
     ProjectileImpactSystem,
     LifetimeSystem,
-    EmotionRecognitionSystem,
-    GameplayMappingSystem,
+    BiofeedbackSystem,
     DebugRenderSystem,
 )
 
@@ -63,8 +62,9 @@ class GameplayState:
 
         # Input & AI (ML)
         self.player_input_system = PlayerInputSystem(self.event_manager)
-        self.emotion_recognition_system = EmotionRecognitionSystem(self.event_manager)
-        self.gameplay_mapping_system = GameplayMappingSystem(self.event_manager, self.director)
+        # self.emotion_recognition_system = EmotionRecognitionSystem(self.event_manager)
+        # self.gameplay_mapping_system = GameplayMappingSystem(self.event_manager, self.director)
+        self.biofeedback_system = BiofeedbackSystem(self.event_manager, self.director)
 
         # Logic & Mechanics
         self.skill_system = SkillSystem(
@@ -98,7 +98,7 @@ class GameplayState:
 
         # Rendering
         self.render_system = RenderSystem()
-        self.debug_render_system = DebugRenderSystem(self.director, self.gameplay_mapping_system)
+        self.debug_render_system = DebugRenderSystem(self.director, self.event_manager)
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         """Process raw PyGame events."""
@@ -108,8 +108,9 @@ class GameplayState:
         """Update the state logic."""
 
         # --- 1. Update ML & Director ---
-        self.emotion_recognition_system.update(delta_time)
-        self.gameplay_mapping_system.update(delta_time)
+        # self.emotion_recognition_system.update(delta_time)
+        # self.gameplay_mapping_system.update(delta_time)
+        self.biofeedback_system.update(delta_time)
         self.director.update(delta_time)
 
         # --- 2. Update Input & Logic ---
@@ -138,3 +139,6 @@ class GameplayState:
         """Render the state content to the screen."""
         self.render_system.draw(self.entity_manager, screen)
         self.debug_render_system.draw(screen)
+
+    def on_exit(self):
+        self.biofeedback_system.shutdown()

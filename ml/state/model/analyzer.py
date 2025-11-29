@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from core.preset_mapping import PresetMapping
+from ml.state.core.preset_mapping import PresetMapping
 from loguru import logger
 from plotly.subplots import make_subplots
 from sklearn.metrics.pairwise import cosine_similarity

@@ -1,11 +1,11 @@
 import asyncio
 import os
 import random
-from typing import Any
+from typing import Any, Tuple
 
 import aiohttp
 import pandas as pd
-from config import service_config, settings
+from ml.state.config import service_config, settings
 from loguru import logger
 
 

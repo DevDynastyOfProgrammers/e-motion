@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pandas as pd
 from config import data_config
-from core.preset_mapping import PresetMapping
+from ml.state.core.preset_mapping import PresetMapping
 from loguru import logger
-from model.trainer import AdvancedCosineTrainer
+from ml.state.model.trainer import AdvancedCosineTrainer
 
 
 def setup_logging() -> None:

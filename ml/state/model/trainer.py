@@ -7,14 +7,14 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from config import data_config
-from core.preset_mapping import PresetMapping
+from ml.state.config import data_config
+from ml.state.core.preset_mapping import PresetMapping
 from loguru import logger
 from plotly.subplots import make_subplots
 from sklearn.metrics import classification_report, f1_score
 
-from model.analyzer import AdvancedPresetAnalyzer
-from model.classifier import AdvancedEmotionClassifier
+from ml.state.model.analyzer import AdvancedPresetAnalyzer
+from ml.state.model.classifier import AdvancedEmotionClassifier
 
 
 class AdvancedCosineTrainer:

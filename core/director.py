@@ -42,7 +42,8 @@ class GameDirector:
 
     def update(self, delta_time: float) -> None:
         """Smoothly interpolates the current state towards the target state."""
-        factor = self._smoothing_factor * delta_time
+        raw_factor = self._smoothing_factor * delta_time
+        factor = min(raw_factor, 1.0)
 
         for field in fields(GameStateVector):
             name = field.name
