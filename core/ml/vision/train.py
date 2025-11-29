@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
-from .dataset import build_dataloaders, Config
-from .models import EmotionCNN
-from .utils import get_device
-from .config import IMG_SIZE
+from core.ml.vision.dataset import build_dataloaders, Config
+from core.ml.vision.models import EmotionCNN
+from core.ml.vision.utils import get_device
+from core.ml.vision.config import IMG_SIZE
 
 EPOCHS = 50
 LEARNING_RATE = 1e-4

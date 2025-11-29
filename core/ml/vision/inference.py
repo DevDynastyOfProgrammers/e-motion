@@ -3,9 +3,9 @@ import cv2
 import numpy as np
 from torchvision import transforms
 from PIL import Image
-from .models import EmotionCNN
-from .config import EMOTION_CLASSES, IMG_SIZE
-from .utils import load_checkpoint, get_device
+from core.ml.vision.models import EmotionCNN
+from core.ml.vision.config import EMOTION_CLASSES, IMG_SIZE
+from core.ml.vision.utils import load_checkpoint, get_device
 
 class EmotionRecognizer:
     def __init__(self, model_path: str, device: str = 'cpu'):
