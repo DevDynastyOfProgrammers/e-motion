@@ -3,4 +3,7 @@
 __pycache__/
 .mypy_cache/
 .ruff_cache/
-*.pyc   
+*.pyc
+.DS_Store
+*.log
+.python-version
