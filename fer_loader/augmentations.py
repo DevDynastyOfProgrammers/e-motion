@@ -11,7 +11,7 @@ def get_train_augmentations(image_size: tuple[int, int]) -> A.Compose:
                  rotate=(0, 0), shear=(-3, -3), border_mode=cv2.BORDER_REFLECT_101, p=0.5),
         A.RandomScale(scale_limit=0.05, p=0.3),
         A.OneOf([
-            A.GaussNoise(std_range=(0.02, 0.08), per_channel=True, noise_scale_factor=1.0, p=0.3),
+            A.GaussNoise(std_range=(0.05, 0.2), per_channel=False, noise_scale_factor=0.5, p=0.6),
             A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=0.4)
         ], p=0.5),
         A.RandomBrightnessContrast(brightness_limit=0.15, contrast_limit=0.15, p=0.6),
