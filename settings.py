@@ -36,7 +36,7 @@ ENEMY_VELOCITY: int = get_env_int("ENEMY_VELOCITY", 150)
 
 # ML Settings
 EMOTION_MODEL_PATH: str = get_env_str("EMOTION_MODEL_PATH", "assets/models/emotion_model.pth")
-STATE_PROTOTYPES_PATH: str = get_env_str("STATE_PROTOTYPES_PATH", "ml/state/data/models/synthetic_reset_prototypes.npy")
+STATE_PROTOTYPES_PATH: str = get_env_str("STATE_PROTOTYPES_PATH", "ml/state/data/models/director.npy")
 
 # System settings
 LOG_LEVEL: str = get_env_str("LOG_LEVEL", "INFO")

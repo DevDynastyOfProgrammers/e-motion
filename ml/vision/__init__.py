@@ -1,5 +1,13 @@
 # vision package init
-from .config import EMOTION_CLASSES, IMG_SIZE
 from .models import EmotionCNN
-from .dataset import Config, build_dataloaders
+from .config import EMOTION_CLASSES, IMG_SIZE, NORMALIZATION_MEAN, NORMALIZATION_STD
 from .inference import EmotionRecognizer
+
+__all__ = [
+    "EmotionCNN", 
+    "EmotionRecognizer", 
+    "EMOTION_CLASSES", 
+    "IMG_SIZE", 
+    "NORMALIZATION_MEAN", 
+    "NORMALIZATION_STD"
+]

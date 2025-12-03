@@ -1,102 +1,78 @@
 import os
 import numpy as np
-import logging
-from typing import Dict, Any
+from typing import Dict, Optional
 from dataclasses import dataclass
+from loguru import logger
 
 from ml.state.core.preset_mapping import PresetMapping
-from ml.state.model.classifier import AdvancedEmotionClassifier
-from ml.state.model.analyzer import AdvancedPresetAnalyzer
-
-# Настраиваем логгер для этого модуля
-logger = logging.getLogger("ml.state")
+from ml.state.model.classifier import AdvancedEmotionClassifier, AdvancedPresetAnalyzer
 
 @dataclass
 class StatePrediction:
-    """Результат работы State Model для игрового движка."""
+    """Prediction result from the State Model intended for the game engine."""
     preset_name: str
     confidence: float
     multipliers: Dict[str, float]
 
 class StateDirector:
     """
-    Класс-интерфейс для использования модели 'Game Director'.
-    Загружает веса при инициализации и предоставляет метод predict().
+    Interface class for using the 'Game Director' model.
+    Loads weights (prototypes) and converts emotion probabilities into game multipliers.
     """
 
     def __init__(self, prototypes_path: str):
-        self.classifier = None
+        self.classifier: Optional[AdvancedEmotionClassifier] = None
         self._load_model(prototypes_path)
 
     def _load_model(self, path: str) -> None:
-        """Загрузка весов (прототипов) из .npy файла."""
+        """Loads weights (prototypes) from a .npy file."""
         if not os.path.exists(path):
-            logger.warning(f"⚠️ Prototypes file not found at: {path}. Using fallback defaults.")
+            logger.warning(f"⚠️ StateDirector: Prototypes file not found at '{path}'. Game will use defaults.")
             return
 
         try:
-            # Инициализация анализатора и загрузка весов
-            analyzer = AdvancedPresetAnalyzer()
+            logger.info(f"📂 StateDirector: Loading prototypes from {path}...")
             
-            # allow_pickle=True нужен, так как мы сохраняем словари/объекты numpy
+            # 1. Load prototype dictionary from .npy
+            # allow_pickle=True is required because it contains dictionaries
             loaded_prototypes = np.load(path, allow_pickle=True).item()
+            
+            # 2. Initialize Analyzer
+            analyzer = AdvancedPresetAnalyzer()
             analyzer.preset_prototypes = loaded_prototypes
             
-            # Создаем классификатор на основе загруженных прототипов
+            # 3. Initialize Classifier
             self.classifier = AdvancedEmotionClassifier(analyzer)
-            logger.info(f"StateDirector model loaded successfully from {path}")
+            
+            count = len(loaded_prototypes)
+            logger.success(f"✅ StateDirector initialized. Loaded {count} prototypes.")
+            
         except Exception as e:
-            logger.error(f"Failed to load StateDirector model: {e}")
+            logger.error(f"❌ StateDirector: Failed to load model: {e}")
             self.classifier = None
 
     def predict(self, emotion_probs: Dict[str, float], confidence: float = 1.0) -> StatePrediction:
         """
-        Принимает вероятности эмоций и возвращает игровые множители.
-        
-        Args:
-            emotion_probs: словарь вида {'angry_disgust': 0.1, ...} или {'prob_angry...': 0.1}
-            confidence: уровень уверенности Vision модели (0.0 - 1.0)
+        Main inference method.
         """
-        # 1. Подготовка вектора признаков для модели
-        # Ожидаемый порядок в classifier.py: [confidence, angry, fear, happy, neutral, sad]
-        
-        # Карта нормализации ключей (на случай если Vision отдает без префикса prob_)
-        keys_map = {
-            'angry_disgust': 'prob_angry_disgust',
-            'fear_surprise': 'prob_fear_surprise',
-            'happy': 'prob_happy',
-            'neutral': 'prob_neutral',
-            'sad': 'prob_sad'
-        }
+        # 1. Prepare input vector
+        input_vector = self._build_input_vector(emotion_probs, confidence)
 
-        # Собираем вектор
-        input_vector = [confidence]
-        for key in ['angry_disgust', 'fear_surprise', 'happy', 'neutral', 'sad']:
-            # Ищем ключ с префиксом или без
-            lookup_key = keys_map[key]
-            # Если ключа нет, берем 0.0 (или пробуем искать без префикса)
-            val = emotion_probs.get(lookup_key, emotion_probs.get(key, 0.0))
-            input_vector.append(val)
-        
-        input_np = np.array(input_vector)
-
-        # 2. Инференс
+        # 2. Inference
         preset_name = "standard"
         pred_conf = 0.0
 
         if self.classifier:
             try:
-                # classifier возвращает: (preset_name, confidence_score, details_dict)
-                preset_name, pred_conf, _ = self.classifier.predict(input_np)
+                preset_name, pred_conf, _ = self.classifier.predict(input_vector)
+                
+                # Log only if confidence is high, or use trace for per-frame debug
+                # logger.trace(f"State Inference: {preset_name} ({pred_conf:.2f})") 
             except Exception as e:
-                logger.error(f"Inference error: {e}. Falling back to 'standard'.")
+                logger.error(f"StateDirector Inference Error: {e}")
 
-        # 3. Маппинг Пресета в Числовые Множители
-        # Получаем список значений из PresetMapping
+        # 3. Convert to multipliers
         multipliers_list = PresetMapping.get_preset_multipliers(preset_name)
-        
-        # PresetParameters содержит поля в определенном порядке:
-        # spawn_rate, enemy_speed, enemy_health, enemy_damage, player_speed, player_damage, item_drop
         
         multipliers_dict = {
             "spawn_rate_multiplier": multipliers_list[0],
@@ -107,18 +83,41 @@ class StateDirector:
             "player_damage_multiplier": multipliers_list[5],
             "item_drop_chance_modifier": multipliers_list[6]
         }
-
-        # 4. Преобразование offset -> multiplier
-        # В PresetMapping значения часто смещения (0.2 = +20%, -0.5 = -50%).
-        # Движку нужны множители (1.2 и 0.5 соответственно).
+        
+        # 4. Convert offsets to multipliers
+        final_multipliers = {}
         for k, v in multipliers_dict.items():
-            multipliers_dict[k] = 1.0 + v
-            # Защита от отрицательных значений (кроме специальных случаев)
-            if multipliers_dict[k] < 0.1: 
-                multipliers_dict[k] = 0.1
+            final_val = 1.0 + v
+            # Safety limits (Clamping)
+            if final_val < 0.1: final_val = 0.1
+            if final_val > 5.0: final_val = 5.0
+            final_multipliers[k] = final_val
 
         return StatePrediction(
             preset_name=preset_name,
             confidence=pred_conf,
-            multipliers=multipliers_dict
+            multipliers=final_multipliers
         )
+
+    def _build_input_vector(self, probs: Dict[str, float], confidence: float) -> np.ndarray:
+        """Assembles a Numpy vector in strict order."""
+        keys_map = {
+            'angry_disgust': ['prob_angry_disgust', 'angry_disgust', 'angry'],
+            'fear_surprise': ['prob_fear_surprise', 'fear_surprise', 'fear'],
+            'happy': ['prob_happy', 'happy', 'joy'],
+            'neutral': ['prob_neutral', 'neutral'],
+            'sad': ['prob_sad', 'sad', 'sorrow']
+        }
+        
+        vector = [confidence]
+        
+        for emotion_key in ['angry_disgust', 'fear_surprise', 'happy', 'neutral', 'sad']:
+            val = 0.0
+            possible_keys = keys_map[emotion_key]
+            for key in possible_keys:
+                if key in probs:
+                    val = probs[key]
+                    break
+            vector.append(float(val))
+            
+        return np.array(vector, dtype=np.float32)

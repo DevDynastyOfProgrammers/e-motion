@@ -1,43 +1,73 @@
-import torch
 import cv2
+import torch
 import numpy as np
-from torchvision import transforms
 from PIL import Image
+from torchvision import transforms
+from typing import Dict, Any, Union
+
 from ml.vision.models import EmotionCNN
-from ml.vision.config import EMOTION_CLASSES, IMG_SIZE
+from ml.vision.config import EMOTION_CLASSES, IMG_SIZE, NORMALIZATION_MEAN, NORMALIZATION_STD
 from ml.vision.utils import load_checkpoint, get_device
 
 class EmotionRecognizer:
+    """
+    High-level Interface for Emotion Recognition Inference.
+    Handles image preprocessing (BGR -> RGB, Resize, Normalize) and model execution.
+    """
+
     def __init__(self, model_path: str, device: str = 'cpu'):
         self.device = get_device(device)
-        # Инициализация модели (кол-во классов = len(EMOTION_CLASSES))
-        self.model = EmotionCNN(num_classes=len(EMOTION_CLASSES))
+        
+        # Initialize Architecture
+        num_classes = len(EMOTION_CLASSES)
+        self.model = EmotionCNN(num_classes=num_classes)
+        
+        # Load Weights
         self.model = load_checkpoint(self.model, model_path, self.device)
-        self.model.to(self.device)
-        self.model.eval()
-
-        # Трансформации — те же, что при валидации
+        
+        # Define Transforms
         self.transform = transforms.Compose([
+            transforms.Resize((IMG_SIZE, IMG_SIZE)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
+            transforms.Normalize(mean=NORMALIZATION_MEAN, std=NORMALIZATION_STD)
         ])
 
-    def predict(self, frame: np.ndarray):
+    def predict(self, frame: np.ndarray) -> Dict[str, Union[str, float]]:
         """
-        Принимает кадр (numpy array от OpenCV BGR), возвращает словарь с вероятностями и предсказанием.
+        Predicts emotion from a raw OpenCV frame (BGR).
+        Returns a dictionary with probabilities and the dominant class.
         """
+        # 1. Preprocess: BGR (OpenCV) -> RGB (PIL)
+        # OpenCV frames are numpy arrays in BGR format
+        if frame is None or frame.size == 0:
+            raise ValueError("Empty frame provided for inference")
+
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_img = Image.fromarray(rgb_frame).resize((IMG_SIZE, IMG_SIZE))
-        tensor = self.transform(pil_img).unsqueeze(0).to(self.device)
+        pil_img = Image.fromarray(rgb_frame)
+
+        # 2. Transform & Batch
+        tensor = self.transform(pil_img)
+        tensor = tensor.unsqueeze(0).to(self.device) # Add batch dimension
+
+        # 3. Inference
         with torch.no_grad():
             outputs = self.model(tensor)
             probs = torch.nn.functional.softmax(outputs, dim=1)
 
+        # 4. Format Result
         result = {}
-        for i, emotion_name in EMOTION_CLASSES.items():
-            result[f"prob_{emotion_name.lower()}"] = float(probs[0][i])
-        top_prob, top_class_idx = torch.max(probs, 1)
-        result['predicted_class'] = EMOTION_CLASSES[top_class_idx.item()]
-        result['confidence'] = float(top_prob)
+        probs_cpu = probs[0].cpu().numpy()
+        
+        # Add individual probabilities
+        for idx, emotion_name in EMOTION_CLASSES.items():
+            key_name = f"prob_{emotion_name.lower()}" # e.g. prob_angry_disgust
+            result[key_name] = float(probs_cpu[idx])
+
+        # Find dominant
+        top_idx = int(torch.argmax(probs, dim=1).item())
+        top_prob = float(probs_cpu[top_idx])
+        
+        result['predicted_class'] = EMOTION_CLASSES[top_idx]
+        result['confidence'] = top_prob
+        
         return result

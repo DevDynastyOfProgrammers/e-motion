@@ -1,9 +1,10 @@
+import sys
+import os
 import unittest
 import queue
-import time
-from unittest.mock import MagicMock
 
-# Фиктивные импорты для теста
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from core.director import GameDirector
 from core.event_manager import EventManager
 from core.emotion import Emotion, EmotionPrediction
@@ -13,19 +14,21 @@ from ml.state.inference import StatePrediction
 class TestFullIntegration(unittest.TestCase):
     def setUp(self):
         self.event_manager = EventManager()
-        # Используем более реалистичный фактор (например, 5.0)
-        # При dt=0.1 фактор будет 0.5 (половина пути к цели за кадр)
+        # Use a more realistic factor (e.g., 5.0)
+        # With dt=0.1 the factor will be 0.5 (halfway to target per frame)
         self.director = GameDirector(smoothing_factor=5.0) 
         
+        # Initialize system and immediately stop worker to prevent threading noise during tests
         self.system = BiofeedbackSystem(self.event_manager, self.director)
         self.system.shutdown()
         
+        # Mock the queue to manually feed data
         self.system.result_queue = queue.Queue()
 
     def test_data_flow_from_ml_to_director(self):
-        """Тест прохождения данных от ML-очереди до изменения множителей в Director."""
+        """Test data flow from ML queue to multiplier updates in Director."""
         
-        # 1. Создаем фейковые данные (как будто от нейросети)
+        # 1. Create fake data (simulating Neural Network output)
         fake_emotion = EmotionPrediction(
             dominant_emotion=Emotion.ANGER,
             confidence=0.95,
@@ -36,41 +39,43 @@ class TestFullIntegration(unittest.TestCase):
             prob_sad=0.1
         )
         
-        # Фейковый ответ от State Director
+        # Fake response from State Director
         fake_state_pred = StatePrediction(
             preset_name="hardcore",
             confidence=0.8,
             multipliers={
-                "spawn_rate_multiplier": 2.5,  # Значительно больше 1.0
+                "spawn_rate_multiplier": 2.5,  # Significantly higher than 1.0
                 "enemy_speed_multiplier": 1.5
             }
         )
 
-        # 2. Кладем в очередь (симуляция работы потока)
+        # 2. Put into queue (simulate worker thread output)
+        # Added 'frame': None because BiofeedbackSystem expects it
         self.system.result_queue.put({
             'emotion': fake_emotion,
-            'state': fake_state_pred
+            'state': fake_state_pred,
+            'frame': None 
         })
 
-        # 3. Проверяем начальное состояние Директора
+        # 3. Check initial Director state
         self.assertEqual(self.director.state.spawn_rate_multiplier, 1.0)
 
-        # 4. Выполняем update (Main Thread logic)
-        self.system.update(0.016) # 1 кадр
+        # 4. Execute update (Main Thread logic)
+        self.system.update(0.016) # Simulate 1 frame (approx. 60 FPS)
 
-        # 5. Проверяем Target State (должен мгновенно обновиться)
+        # 5. Check Target State (should update instantly)
         self.assertEqual(self.director.target_state.spawn_rate_multiplier, 2.5)
         self.assertEqual(self.director.target_state.enemy_speed_multiplier, 1.5)
-        # Параметр, которого не было в словаре, должен остаться 1.0
+        # Parameter missing from dict should remain default 1.0
         self.assertEqual(self.director.target_state.player_speed_multiplier, 1.0)
 
-        # 6. Проверяем интерполяцию
-        # Делаем update директора, он должен сдвинуть current state в сторону target
+        # 6. Check interpolation
+        # Update director, it should shift current state towards target
         self.director.update(0.1)
         
         current_spawn = self.director.state.spawn_rate_multiplier
         self.assertGreater(current_spawn, 1.0)
-        self.assertLess(current_spawn, 2.6) # Не должен перелететь
+        self.assertLess(current_spawn, 2.6) # Should not overshoot
 
         print(f"Integration Success: Spawn Rate moved from 1.0 -> {current_spawn:.2f} (Target: 2.5)")
 
