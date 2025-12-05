@@ -5,8 +5,9 @@ from typing import Any, Tuple
 
 import aiohttp
 import pandas as pd
-from ml.state.config import service_config, settings
 from loguru import logger
+
+from ml.state.config import service_config, settings
 
 
 class EmotionToGameParams:
@@ -15,34 +16,34 @@ class EmotionToGameParams:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
         self.api_url = settings.API_URL
-        self.headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        self.headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
 
         self.presets: dict[str, list[float]] = {
-            "god_mode": [-0.8, -0.9, -1.0, -1.0, 0.7, 1.0, 0.5],
-            "walk_in_the_park": [-0.5, -0.5, -0.5, -0.5, 0.3, 0.5, 0.3],
-            "beginner": [-0.2, -0.2, 0.0, -0.2, 0.0, 0.2, 0.1],
-            "standard": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            "challenge": [0.4, 0.2, 0.4, 0.3, 0.0, 0.0, 0.0],
-            "survival_horror": [0.2, 0.0, 0.8, 0.8, -0.2, -0.3, -0.5],
-            "nightmare": [0.8, 0.5, 0.7, 0.7, 0.3, 0.0, 0.4],
-            "hardcore": [0.3, 0.6, 0.5, 1.0, 0.1, -0.5, -0.8],
-            "bullet_heaven": [1.0, 0.8, 0.9, 0.9, 0.5, 0.8, 0.7],
-            "impossible": [1.0, 1.0, 1.0, 1.0, -0.5, -1.0, -1.0],
+            'god_mode': [-0.8, -0.9, -1.0, -1.0, 0.7, 1.0, 0.5],
+            'walk_in_the_park': [-0.5, -0.5, -0.5, -0.5, 0.3, 0.5, 0.3],
+            'beginner': [-0.2, -0.2, 0.0, -0.2, 0.0, 0.2, 0.1],
+            'standard': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            'challenge': [0.4, 0.2, 0.4, 0.3, 0.0, 0.0, 0.0],
+            'survival_horror': [0.2, 0.0, 0.8, 0.8, -0.2, -0.3, -0.5],
+            'nightmare': [0.8, 0.5, 0.7, 0.7, 0.3, 0.0, 0.4],
+            'hardcore': [0.3, 0.6, 0.5, 1.0, 0.1, -0.5, -0.8],
+            'bullet_heaven': [1.0, 0.8, 0.9, 0.9, 0.5, 0.8, 0.7],
+            'impossible': [1.0, 1.0, 1.0, 1.0, -0.5, -1.0, -1.0],
         }
 
         self.game_parameters: list[str] = [
-            "spawn_rate_multiplier",
-            "enemy_speed_multiplier",
-            "enemy_health_multiplier",
-            "enemy_damage_multiplier",
-            "player_speed_multiplier",
-            "player_damage_multiplier",
-            "item_drop_chance_modifier",
+            'spawn_rate_multiplier',
+            'enemy_speed_multiplier',
+            'enemy_health_multiplier',
+            'enemy_damage_multiplier',
+            'player_speed_multiplier',
+            'player_damage_multiplier',
+            'item_drop_chance_modifier',
         ]
 
     def prepare_prompt(self, emotion_data: dict[str, float]) -> str:
         """Prepare AI prompt for emotion analysis."""
-        emotion_info = "\n".join([f"{k}: {v}" for k, v in emotion_data.items()])
+        emotion_info = '\n'.join([f'{k}: {v}' for k, v in emotion_data.items()])
 
         return f"""
 You are an expert game psychologist specializing in dynamic difficulty adjustment. Analyze the player's emotional state and select the optimal game preset.
@@ -126,10 +127,10 @@ Choose the optimal preset based on comprehensive emotional analysis:
     async def call_grok_api(self, session: aiohttp.ClientSession, prompt: str) -> str | None:
         """Call Grok API with error handling."""
         payload = {
-            "model": "x-ai/grok-4.1-fast",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.2,
-            "max_tokens": 30,
+            'model': 'x-ai/grok-4.1-fast',
+            'messages': [{'role': 'user', 'content': prompt}],
+            'temperature': 0.2,
+            'max_tokens': 30,
         }
 
         try:
@@ -141,41 +142,41 @@ Choose the optimal preset based on comprehensive emotional analysis:
             ) as response:
                 response.raise_for_status()
                 result = await response.json()
-                return result["choices"][0]["message"]["content"].strip()
+                return result['choices'][0]['message']['content'].strip()
 
         except asyncio.TimeoutError:
-            logger.error("API call timed out")
+            logger.error('API call timed out')
             return None
         except aiohttp.ClientError as exc:
-            logger.error(f"HTTP error during API call: {exc}")
+            logger.error(f'HTTP error during API call: {exc}')
             return None
         except Exception as exc:
-            logger.error(f"Unexpected error during API call: {exc}")
+            logger.error(f'Unexpected error during API call: {exc}')
             return None
 
     def parse_api_response(self, response: str) -> str | None:
         """Parse API response to extract preset name."""
         try:
             cleaned = response.strip().lower()
-            cleaned = cleaned.replace(".", "").replace('"', "").replace("'", "").strip()
+            cleaned = cleaned.replace('.', '').replace('"', '').replace("'", '').strip()
 
             for preset_name in self.presets.keys():
                 if preset_name in cleaned:
                     return preset_name
 
-            logger.warning(f"No valid preset found in response: {response}")
+            logger.warning(f'No valid preset found in response: {response}')
             return None
 
         except Exception as exc:
-            logger.error(f"Error parsing response: {exc}, response: {response}")
+            logger.error(f'Error parsing response: {exc}, response: {response}')
             return None
 
     def add_missing_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """Add missing required columns to DataFrame."""
         df_processed = df.copy()
 
-        if "preset" not in df_processed.columns:
-            df_processed["preset"] = None
+        if 'preset' not in df_processed.columns:
+            df_processed['preset'] = None
 
         for param in self.game_parameters:
             if param not in df_processed.columns:
@@ -193,7 +194,7 @@ Choose the optimal preset based on comprehensive emotional analysis:
     def is_row_processed(self, row: pd.Series) -> bool:
         """Check if row already has preset and game parameters set."""
         # Check if preset is set and not None/NaN
-        if pd.notna(row.get("preset")) and str(row.get("preset")).strip() != "":
+        if pd.notna(row.get('preset')) and str(row.get('preset')).strip() != '':
             return True
 
         # Check if all game parameters are set and not None/NaN
@@ -208,14 +209,14 @@ Choose the optimal preset based on comprehensive emotional analysis:
         tasks = []
 
         for row_data in batch_data:
-            idx = row_data["index"]
-            emotion_data = row_data["emotion_data"]
+            idx = row_data['index']
+            emotion_data = row_data['emotion_data']
             prompt = self.prepare_prompt(emotion_data)
             task = self.call_grok_api(session, prompt)
             tasks.append((idx, task))
 
         # Execute all API calls concurrently
-        results: list[Tuple[int, str | None]] = []
+        results: list[tuple[int, str | None]] = []
         for idx, task in tasks:
             response = await task
             results.append((idx, response))
@@ -226,16 +227,16 @@ Choose the optimal preset based on comprehensive emotional analysis:
             if response:
                 preset_name = self.parse_api_response(response)
                 if preset_name:
-                    df.at[idx, "preset"] = preset_name
+                    df.at[idx, 'preset'] = preset_name
                     self.apply_preset_values(df, idx, preset_name)
                     successful_count += 1
                     logger.debug(f"Row {idx}: Preset '{preset_name}' applied")
                 else:
-                    logger.warning(f"Row {idx}: Failed to parse preset from response")
+                    logger.warning(f'Row {idx}: Failed to parse preset from response')
             else:
-                logger.error(f"Row {idx}: API call failed")
+                logger.error(f'Row {idx}: API call failed')
 
-        logger.info(f"Batch completed: {successful_count}/{len(batch_data)} successful")
+        logger.info(f'Batch completed: {successful_count}/{len(batch_data)} successful')
 
     async def process_emotions_batch_async(
         self,
@@ -248,14 +249,14 @@ Choose the optimal preset based on comprehensive emotional analysis:
     ) -> None:
         """Process emotions batch asynchronously with progress tracking."""
         if output_file is None:
-            output_file = input_file.replace(".csv", "_updated.csv")
+            output_file = input_file.replace('.csv', '_updated.csv')
 
-        logger.info(f"📁 Loading data from {input_file}")
-        df = pd.read_csv(input_file, delimiter=";")
-        logger.info(f"✅ Loaded {len(df)} rows")
+        logger.info(f'📁 Loading data from {input_file}')
+        df = pd.read_csv(input_file, delimiter=';')
+        logger.info(f'✅ Loaded {len(df)} rows')
 
         df = self.add_missing_columns(df)
-        logger.info("✅ Added missing columns")
+        logger.info('✅ Added missing columns')
 
         # Find unprocessed rows
         unprocessed_mask = ~df.apply(self.is_row_processed, axis=1)
@@ -263,18 +264,18 @@ Choose the optimal preset based on comprehensive emotional analysis:
         rows_count = len(rows_to_process)
 
         if rows_count == 0:
-            logger.info("🎉 All rows already processed")
+            logger.info('🎉 All rows already processed')
             return
 
-        logger.info(f"🔧 Found {rows_count} unprocessed rows")
+        logger.info(f'🔧 Found {rows_count} unprocessed rows')
 
         # Enhanced shuffling with emotional diversity optimization
         if shuffle_batches and len(rows_to_process) > 0:
-            emotional_columns = ["prob_angry_disgust", "prob_fear_surprise", "prob_happy", "prob_neutral", "prob_sad"]
+            emotional_columns = ['prob_angry_disgust', 'prob_fear_surprise', 'prob_happy', 'prob_neutral', 'prob_sad']
             rows_to_process = rows_to_process.copy()
-            rows_to_process["emotional_complexity"] = rows_to_process[emotional_columns].std(axis=1)
-            rows_to_process = rows_to_process.sample(frac=1, random_state=42, weights="emotional_complexity")
-            logger.info("🔄 Rows shuffled with emotional complexity weighting")
+            rows_to_process['emotional_complexity'] = rows_to_process[emotional_columns].std(axis=1)
+            rows_to_process = rows_to_process.sample(frac=1, random_state=42, weights='emotional_complexity')
+            logger.info('🔄 Rows shuffled with emotional complexity weighting')
 
         connector = aiohttp.TCPConnector(limit=concurrent_requests, limit_per_host=concurrent_requests)
 
@@ -294,39 +295,39 @@ Choose the optimal preset based on comprehensive emotional analysis:
                         unprocessed_in_batch.append((idx, row))
 
                 if not unprocessed_in_batch:
-                    logger.info(f"⏭️ Batch {batch_num}: All rows processed, skipping...")
+                    logger.info(f'⏭️ Batch {batch_num}: All rows processed, skipping...')
                     continue
 
                 logger.info(
-                    f"🎯 Processing batch {batch_num} with {len(unprocessed_in_batch)} unprocessed rows "
-                    f"({start_idx}-{end_idx - 1})"
+                    f'🎯 Processing batch {batch_num} with {len(unprocessed_in_batch)} unprocessed rows '
+                    f'({start_idx}-{end_idx - 1})'
                 )
 
                 # Prepare batch data only for unprocessed rows
                 batch_data = []
                 for idx, row in unprocessed_in_batch:
                     emotion_data = {
-                        "true_class": row["true_class"],
-                        "predicted_class": row["predicted_class"],
-                        "confidence": row["confidence"],
-                        "prob_angry_disgust": row["prob_angry_disgust"],
-                        "prob_fear_surprise": row["prob_fear_surprise"],
-                        "prob_happy": row["prob_happy"],
-                        "prob_neutral": row["prob_neutral"],
-                        "prob_sad": row["prob_sad"],
+                        'true_class': row['true_class'],
+                        'predicted_class': row['predicted_class'],
+                        'confidence': row['confidence'],
+                        'prob_angry_disgust': row['prob_angry_disgust'],
+                        'prob_fear_surprise': row['prob_fear_surprise'],
+                        'prob_happy': row['prob_happy'],
+                        'prob_neutral': row['prob_neutral'],
+                        'prob_sad': row['prob_sad'],
                     }
-                    batch_data.append({"index": idx, "emotion_data": emotion_data})
+                    batch_data.append({'index': idx, 'emotion_data': emotion_data})
 
                 # Process batch concurrently
                 await self.process_batch_concurrently(session, batch_data, df)
                 processed_count += len(batch_data)
 
                 # Save progress after each batch
-                df.to_csv(output_file, sep=";", index=False)
+                df.to_csv(output_file, sep=';', index=False)
                 logger.info(
-                    f"💾 Progress saved to {output_file}. "
-                    f"Processed {processed_count}/{total_rows} rows "
-                    f"({processed_count / total_rows * 100:.1f}%)"
+                    f'💾 Progress saved to {output_file}. '
+                    f'Processed {processed_count}/{total_rows} rows '
+                    f'({processed_count / total_rows * 100:.1f}%)'
                 )
 
                 # Adaptive delay between batches
@@ -335,10 +336,10 @@ Choose the optimal preset based on comprehensive emotional analysis:
                     adaptive_delay = max(0.5, delay_between_batches * (1 - emotional_diversity))
                     random_delay = adaptive_delay + random.uniform(0, 0.5)
 
-                    logger.info(f"⏳ Waiting {random_delay:.2f}s (diversity: {emotional_diversity:.3f})...")
+                    logger.info(f'⏳ Waiting {random_delay:.2f}s (diversity: {emotional_diversity:.3f})...')
                     await asyncio.sleep(random_delay)
 
-        logger.info(f"🎉 Processing completed. Total processed: {processed_count} rows")
+        logger.info(f'🎉 Processing completed. Total processed: {processed_count} rows')
 
     def process_emotions_batch(
         self,
@@ -363,18 +364,18 @@ def setup_logging() -> None:
 
     # File logging
     logger.add(
-        "emotion_processor.log",
-        level="INFO",
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
-        rotation="10 MB",
+        'emotion_processor.log',
+        level='INFO',
+        format='{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}',
+        rotation='10 MB',
         retention=5,
     )
 
     # Console logging
     logger.add(
-        lambda msg: print(msg, end=""),
-        level="INFO",
-        format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>",
+        lambda msg: print(msg, end=''),
+        level='INFO',
+        format='<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>',
         colorize=True,
     )
 
@@ -383,20 +384,20 @@ def main() -> None:
     """Main execution function."""
     setup_logging()
 
-    api_key = getattr(settings, "OPENROUTER_API_KEY", "")
+    api_key = getattr(settings, 'OPENROUTER_API_KEY', '')
     if not api_key:
-        logger.error("❌ OPENROUTER_API_KEY not found in settings")
+        logger.error('❌ OPENROUTER_API_KEY not found in settings')
         return
 
     processor = EmotionToGameParams(api_key)
-    input_file = "game_balancing_system/train/emotions.csv"
-    output_file = "game_balancing_system/train/emotions_updated.csv"
+    input_file = 'game_balancing_system/train/emotions.csv'
+    output_file = 'game_balancing_system/train/emotions_updated.csv'
 
     if not os.path.exists(input_file):
-        logger.error(f"❌ Input file not found: {input_file}")
+        logger.error(f'❌ Input file not found: {input_file}')
         return
 
-    logger.info("🚀 Starting emotion processing pipeline...")
+    logger.info('🚀 Starting emotion processing pipeline...')
 
     # Process with optimized parameters
     processor.process_emotions_batch(
@@ -409,5 +410,5 @@ def main() -> None:
     )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

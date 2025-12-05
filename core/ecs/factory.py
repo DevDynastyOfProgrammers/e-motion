@@ -1,21 +1,23 @@
 from typing import Type
+
 from loguru import logger
-from core.ecs.entity import EntityManager
+
 from core.director import GameDirector
 from core.ecs.component import (
-    TransformComponent,
-    RenderComponent,
-    PlayerInputComponent,
     AIComponent,
-    HealthComponent,
-    DamageOnCollisionComponent,
-    LifetimeComponent,
-    SkillSetComponent,
-    ProjectileComponent,
     Component,
+    DamageOnCollisionComponent,
+    HealthComponent,
+    LifetimeComponent,
+    PlayerInputComponent,
+    ProjectileComponent,
+    RenderComponent,
+    SkillSetComponent,
+    TransformComponent,
 )
-from core.skill_data import ProjectileData
+from core.ecs.entity import EntityManager
 from core.entity_data import EntityData
+from core.skill_data import ProjectileData
 
 
 class EntityFactory:
@@ -34,10 +36,10 @@ class EntityFactory:
         self.entity_definitions = entity_definitions
 
         self.component_map: dict[str, Type[Component]] = {
-            "Transform": TransformComponent,
-            "Render": RenderComponent,
-            "DamageOnCollision": DamageOnCollisionComponent,
-            "Lifetime": LifetimeComponent,
+            'Transform': TransformComponent,
+            'Render': RenderComponent,
+            'DamageOnCollision': DamageOnCollisionComponent,
+            'Lifetime': LifetimeComponent,
         }
 
     def _assemble_entity(self, x: float, y: float, config_key: str, is_enemy: bool = False) -> int:
@@ -78,9 +80,9 @@ class EntityFactory:
 
         # 5. Marker Components (AI, PlayerInput)
         for comp_name in data.components:
-            if comp_name == "PlayerInput":
+            if comp_name == 'PlayerInput':
                 self.entity_manager.add_component(entity_id, PlayerInputComponent())
-            elif comp_name == "AI":
+            elif comp_name == 'AI':
                 self.entity_manager.add_component(entity_id, AIComponent())
 
         # 6. Skills
@@ -90,10 +92,10 @@ class EntityFactory:
         return entity_id
 
     def create_player(self, x: float, y: float) -> int:
-        return self._assemble_entity(x, y, "Player", is_enemy=False)
+        return self._assemble_entity(x, y, 'Player', is_enemy=False)
 
     def create_enemy(self, x: float, y: float) -> int:
-        return self._assemble_entity(x, y, "Enemy", is_enemy=True)
+        return self._assemble_entity(x, y, 'Enemy', is_enemy=True)
 
     def create_projectile(
         self,
@@ -107,9 +109,7 @@ class EntityFactory:
         proj_id = self.entity_manager.create_entity()
 
         # Add the base projectile marker component with caster_id
-        self.entity_manager.add_component(
-            proj_id, ProjectileComponent(direction[0], direction[1], caster_id)
-        )
+        self.entity_manager.add_component(proj_id, ProjectileComponent(direction[0], direction[1], caster_id))
 
         # Add components from the YAML definition
         for comp_name, comp_args in projectile_data.components.items():
@@ -118,14 +118,12 @@ class EntityFactory:
                 # We need to type-ignore or cast args here because kwargs unpacking
                 # into dynamic classes is hard for static analysis
                 if comp_class == TransformComponent:
-                    comp_args["x"], comp_args["y"] = x, y
+                    comp_args['x'], comp_args['y'] = x, y
 
                 # Using type: ignore because we trust YAML structure matches Component __init__
                 component = comp_class(**comp_args)  # type: ignore
                 self.entity_manager.add_component(proj_id, component)
             else:
-                logger.warning(
-                    f"Unknown component type '{comp_name}' in projectile '{projectile_data.projectile_id}'"
-                )
+                logger.warning(f"Unknown component type '{comp_name}' in projectile '{projectile_data.projectile_id}'")
 
         return proj_id

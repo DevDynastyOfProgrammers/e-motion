@@ -1,7 +1,8 @@
 import pygame
-from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
-from core.game_state.state_manager import GameStateManager
+
 from core.game_state.gameplay_state import GameplayState
+from core.game_state.state_manager import GameStateManager
+from settings import FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 
 
 class Game:
@@ -43,6 +44,6 @@ class Game:
         pygame.quit()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     game = Game()
     game.run()

@@ -1,13 +1,14 @@
 import math
-from core.ecs.entity import EntityManager
-from core.ecs.component import (
-    TransformComponent,
-    PlayerInputComponent,
-    AIComponent,
-    ProjectileComponent,
-)
-from core.event_manager import EventManager
+
 from core.director import GameDirector
+from core.ecs.component import (
+    AIComponent,
+    PlayerInputComponent,
+    ProjectileComponent,
+    TransformComponent,
+)
+from core.ecs.entity import EntityManager
+from core.event_manager import EventManager
 from core.events import PlayerMoveIntentEvent
 
 
@@ -16,9 +17,7 @@ class MovementSystem:
     Handles movement requests and updates TransformComponents.
     """
 
-    def __init__(
-        self, event_manager: EventManager, entity_manager: EntityManager, director: GameDirector
-    ):
+    def __init__(self, event_manager: EventManager, entity_manager: EntityManager, director: GameDirector):
         self.event_manager = event_manager
         self.entity_manager = entity_manager
         self.director = director
@@ -49,9 +48,7 @@ class EnemyChaseSystem:
     def __init__(self, director: GameDirector) -> None:
         self.director = director
 
-    def update(
-        self, entity_manager: EntityManager, player_transform: TransformComponent, delta_time: float
-    ) -> None:
+    def update(self, entity_manager: EntityManager, player_transform: TransformComponent, delta_time: float) -> None:
         if not player_transform:
             return
 
@@ -74,9 +71,7 @@ class ProjectileMovementSystem:
     """Moves all entities with a ProjectileComponent."""
 
     def update(self, entity_manager: EntityManager, delta_time: float) -> None:
-        projectiles = entity_manager.get_entities_with_components(
-            ProjectileComponent, TransformComponent
-        )
+        projectiles = entity_manager.get_entities_with_components(ProjectileComponent, TransformComponent)
         for entity, (proj, transform) in projectiles:
             transform.x += proj.dx * transform.velocity * delta_time
             transform.y += proj.dy * transform.velocity * delta_time

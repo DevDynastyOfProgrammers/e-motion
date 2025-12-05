@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Callable, Type, Any
+from typing import Any, Callable, Type
+
 from core.events import Event
 
 # Define a type alias for event handlers

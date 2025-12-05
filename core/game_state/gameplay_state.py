@@ -1,28 +1,28 @@
 import pygame
-from core.ecs.entity import EntityManager
-from core.ecs.factory import EntityFactory
-from core.event_manager import EventManager
+
 from core.data_loader import DataLoader
 from core.director import GameDirector
 from core.ecs.component import TransformComponent
-
+from core.ecs.entity import EntityManager
+from core.ecs.factory import EntityFactory
 from core.ecs.systems import (
-    RenderSystem,
-    PlayerInputSystem,
-    MovementSystem,
-    EnemySpawningSystem,
-    EnemyChaseSystem,
-    DeathSystem,
-    SkillSystem,
-    SkillExecutionSystem,
-    DamageSystem,
-    ProjectileSpawningSystem,
-    ProjectileMovementSystem,
-    ProjectileImpactSystem,
-    LifetimeSystem,
     BiofeedbackSystem,
+    DamageSystem,
+    DeathSystem,
     DebugRenderSystem,
+    EnemyChaseSystem,
+    EnemySpawningSystem,
+    LifetimeSystem,
+    MovementSystem,
+    PlayerInputSystem,
+    ProjectileImpactSystem,
+    ProjectileMovementSystem,
+    ProjectileSpawningSystem,
+    RenderSystem,
+    SkillExecutionSystem,
+    SkillSystem,
 )
+from core.event_manager import EventManager
 
 
 class GameplayState:
@@ -41,15 +41,11 @@ class GameplayState:
 
         # 2. Data Loading
         data_loader = DataLoader()
-        self.skill_definitions, self.projectile_definitions = data_loader.load_game_data(
-            "skills.yaml"
-        )
-        self.entity_definitions = data_loader.load_entities("entities.yaml")
+        self.skill_definitions, self.projectile_definitions = data_loader.load_game_data('skills.yaml')
+        self.entity_definitions = data_loader.load_entities('entities.yaml')
 
         # 3. Factory Setup
-        self.entity_factory = EntityFactory(
-            self.entity_manager, self.director, self.entity_definitions
-        )
+        self.entity_factory = EntityFactory(self.entity_manager, self.director, self.entity_definitions)
 
         # 4. Systems Initialization
         self._init_systems()
@@ -67,9 +63,7 @@ class GameplayState:
         self.biofeedback_system = BiofeedbackSystem(self.event_manager, self.director)
 
         # Logic & Mechanics
-        self.skill_system = SkillSystem(
-            self.event_manager, self.entity_manager, self.skill_definitions
-        )
+        self.skill_system = SkillSystem(self.event_manager, self.entity_manager, self.skill_definitions)
         self.skill_execution_system = SkillExecutionSystem(
             self.event_manager, self.entity_manager, self.skill_definitions
         )
@@ -77,14 +71,10 @@ class GameplayState:
         self.lifetime_system = LifetimeSystem(self.event_manager, self.entity_manager)
 
         # Movement & Physics
-        self.movement_system = MovementSystem(
-            self.event_manager, self.entity_manager, self.director
-        )
+        self.movement_system = MovementSystem(self.event_manager, self.entity_manager, self.director)
         self.enemy_chase_system = EnemyChaseSystem(self.director)
         self.projectile_movement_system = ProjectileMovementSystem()
-        self.projectile_impact_system = ProjectileImpactSystem(
-            self.event_manager, self.entity_manager
-        )
+        self.projectile_impact_system = ProjectileImpactSystem(self.event_manager, self.entity_manager)
         self.projectile_spawning_system = ProjectileSpawningSystem(
             self.event_manager,
             self.entity_manager,
@@ -96,13 +86,9 @@ class GameplayState:
         self.damage_system = DamageSystem(self.event_manager, self.entity_manager, self.director)
         self.death_system = DeathSystem(self.event_manager, self.entity_manager)
 
-        # Rendering    
-        self.render_system = RenderSystem()    
-        self.debug_render_system = DebugRenderSystem(
-            self.director, 
-            self.event_manager, 
-            self.biofeedback_system
-        )
+        # Rendering
+        self.render_system = RenderSystem()
+        self.debug_render_system = DebugRenderSystem(self.director, self.event_manager, self.biofeedback_system)
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         """Process raw PyGame events."""

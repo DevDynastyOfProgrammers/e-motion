@@ -1,7 +1,9 @@
-import pygame
 import math
-from core.ecs.entity import EntityManager
+
+import pygame
+
 from core.ecs.component import PlayerInputComponent, TransformComponent
+from core.ecs.entity import EntityManager
 from core.event_manager import EventManager
 from core.events import PlayerMoveIntentEvent
 
@@ -14,9 +16,7 @@ class PlayerInputSystem:
 
     def update(self, entity_manager: EntityManager) -> None:
         # Find the player entity
-        entities = entity_manager.get_entities_with_components(
-            PlayerInputComponent, TransformComponent
-        )
+        entities = entity_manager.get_entities_with_components(PlayerInputComponent, TransformComponent)
         for entity, (input_comp, transform) in entities:
             keys = pygame.key.get_pressed()
             dx, dy = 0.0, 0.0

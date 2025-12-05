@@ -50,7 +50,7 @@ class AdvancedEmotionClassifier:
     def _validate_input_vector(self, emotional_vector: np.ndarray) -> None:
         """Validate input vector dimensions."""
         if len(emotional_vector) != self._expected_features:
-            raise ValueError(f"Expected {self._expected_features} basic features, got {len(emotional_vector)}")
+            raise ValueError(f'Expected {self._expected_features} basic features, got {len(emotional_vector)}')
 
     def _calculate_intensity_features(self, basic_emotions: list[float]) -> list[float]:
         """Calculate emotional intensity related features."""

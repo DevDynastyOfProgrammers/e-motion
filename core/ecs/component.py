@@ -32,7 +32,7 @@ class PlayerInputComponent(Component):
 class AIComponent(Component):
     """Marker component for AI-controlled entities"""
 
-    def __init__(self, ai_type="chase_player"):
+    def __init__(self, ai_type='chase_player') -> None:
         self.ai_type = ai_type
 
 

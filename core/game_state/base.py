@@ -1,4 +1,5 @@
-from typing import Protocol, List, runtime_checkable
+from typing import List, Protocol, runtime_checkable
+
 import pygame
 
 
@@ -10,7 +11,7 @@ class GameState(Protocol):
     compared to abstract base classes.
     """
 
-    def handle_events(self, events: List[pygame.event.Event]) -> None:
+    def handle_events(self, events: list[pygame.event.Event]) -> None:
         """
         Process raw PyGame events.
         """

@@ -1,8 +1,9 @@
 from loguru import logger
-from core.ecs.entity import EntityManager
+
 from core.ecs.component import HealthComponent, LifetimeComponent, PlayerInputComponent
+from core.ecs.entity import EntityManager
 from core.event_manager import EventManager
-from core.events import RequestEntityRemovalEvent, EntityDeathEvent
+from core.events import EntityDeathEvent, RequestEntityRemovalEvent
 
 
 class DeathSystem:
@@ -24,12 +25,12 @@ class DeathSystem:
 
         for entity in entities_to_remove:
             if self.entity_manager.get_component(entity, PlayerInputComponent):
-                logger.info(f"GAME OVER: Player (Entity {entity}) has died!")
+                logger.info(f'GAME OVER: Player (Entity {entity}) has died!')
 
         for entity in entities_to_remove:
             if self.entity_manager.remove_entity(entity):
                 self.event_manager.post(EntityDeathEvent(entity))
-                logger.debug(f"Entity {entity} has DIED and been removed.")
+                logger.debug(f'Entity {entity} has DIED and been removed.')
 
 
 class LifetimeSystem:

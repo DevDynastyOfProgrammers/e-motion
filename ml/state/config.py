@@ -1,18 +1,19 @@
 """
 Runtime configuration for the Emotion State Model.
 """
-from typing import List, Final
+
+from typing import Final, List
 
 # Features expected by the model
 # 1. Confidence
 # 2-6. Basic Emotions
 # 7+. Advanced Features (calculated at runtime)
-BASIC_EMOTION_COLUMNS: Final[List[str]] = [
-    "prob_angry_disgust", 
-    "prob_fear_surprise", 
-    "prob_happy", 
-    "prob_neutral", 
-    "prob_sad"
+BASIC_EMOTION_COLUMNS: Final[list[str]] = [
+    'prob_angry_disgust',
+    'prob_fear_surprise',
+    'prob_happy',
+    'prob_neutral',
+    'prob_sad',
 ]
 
 # Math Constants

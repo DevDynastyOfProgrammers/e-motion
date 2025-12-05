@@ -1,10 +1,11 @@
 import logging
 from dataclasses import dataclass, fields
-from typing import Dict, Any
+from typing import Any, Dict
 
 from core.utils.lerp import lerp
 
-logger = logging.getLogger("core.director")
+logger = logging.getLogger('core.director')
+
 
 @dataclass
 class GameStateVector:
@@ -12,6 +13,7 @@ class GameStateVector:
     Data Object representing the dynamic difficulty parameters.
     Values are multipliers (1.0 = standard gameplay).
     """
+
     spawn_rate_multiplier: float = 1.0
     enemy_speed_multiplier: float = 1.0
     enemy_health_multiplier: float = 1.0
@@ -62,7 +64,7 @@ class GameDirector:
             name = field.name
             current_val = getattr(self._current_state, name)
             target_val = getattr(self._target_state, name)
-            
+
             # Linear Interpolation
             new_val = lerp(current_val, target_val, factor)
             setattr(self._current_state, name, new_val)
@@ -70,13 +72,13 @@ class GameDirector:
     def set_new_target_vector(self, vector: GameStateVector) -> None:
         """Updates the target state. The update() loop will interpolate towards this."""
         if not isinstance(vector, GameStateVector):
-            logger.warning(f"Invalid state object received: {type(vector)}")
+            logger.warning(f'Invalid state object received: {type(vector)}')
             return
-            
+
         # Ensure the model didn't output crazy values (e.g. negative health)
         vector.clamp()
         self._target_state = vector
 
-    def get_debug_info(self) -> Dict[str, float]:
+    def get_debug_info(self) -> dict[str, float]:
         """Returns current multipliers for UI debugging."""
         return {f.name: getattr(self._current_state, f.name) for f in fields(GameStateVector)}

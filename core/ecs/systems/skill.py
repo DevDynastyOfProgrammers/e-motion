@@ -1,14 +1,16 @@
 from typing import Dict
+
 from loguru import logger
-from core.ecs.entity import EntityManager
+
 from core.ecs.component import SkillSetComponent, TransformComponent
+from core.ecs.entity import EntityManager
 from core.event_manager import EventManager
-from core.events import RequestSkillActivationEvent, ApplyAreaDamageEvent, SpawnProjectileEvent
+from core.events import ApplyAreaDamageEvent, RequestSkillActivationEvent, SpawnProjectileEvent
 from core.skill_data import (
-    SkillData,
+    AreaDamageEffectData,
     AutoOnCooldownTriggerData,
     PeriodicTriggerData,
-    AreaDamageEffectData,
+    SkillData,
     SpawnProjectileEffectData,
 )
 
@@ -20,7 +22,7 @@ class SkillSystem:
         self,
         event_manager: EventManager,
         entity_manager: EntityManager,
-        skill_definitions: Dict[str, SkillData],
+        skill_definitions: dict[str, SkillData],
     ) -> None:
         self.event_manager = event_manager
         self.entity_manager = entity_manager
@@ -66,7 +68,7 @@ class SkillExecutionSystem:
         self,
         event_manager: EventManager,
         entity_manager: EntityManager,
-        skill_definitions: Dict[str, SkillData],
+        skill_definitions: dict[str, SkillData],
     ) -> None:
         self.event_manager = event_manager
         self.entity_manager = entity_manager
@@ -99,6 +101,4 @@ class SkillExecutionSystem:
                     )
                 )
             elif isinstance(effect, SpawnProjectileEffectData):
-                self.event_manager.post(
-                    SpawnProjectileEvent(caster_id=event.entity_id, effect_data=effect)
-                )
+                self.event_manager.post(SpawnProjectileEvent(caster_id=event.entity_id, effect_data=effect))
