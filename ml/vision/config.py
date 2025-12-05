@@ -1,4 +1,4 @@
-from typing import Dict, Final, List
+from typing import Final
 
 # Image Parameters
 IMG_SIZE: Final[int] = 64
