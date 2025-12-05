@@ -21,7 +21,7 @@ lint:
 	uv run mypy .
 
 format:
-	uv run ruff format
+	uvx ruff check --select I --fix .
 
 clean:
 	rm -rf .venv
