@@ -1,9 +1,12 @@
+from dataclasses import dataclass, field
+
 import numpy as np
 from loguru import logger
 
 from ml.state.constants import EPSILON, WEIGHT_COSINE, WEIGHT_EUCLIDEAN
 
 
+@dataclass
 class AdvancedPresetAnalyzer:
     """
     Acts as a container for prototypes and similarity logic.
@@ -11,8 +14,7 @@ class AdvancedPresetAnalyzer:
      but striped of heavy dependencies).
     """
 
-    def __init__(self) -> None:
-        self.preset_prototypes: dict[str, np.ndarray] = {}
+    preset_prototypes: dict[str, np.ndarray] = field(default_factory=dict)
 
     def find_most_similar_preset(self, feature_vector: np.ndarray) -> tuple[str, float, dict[str, float]]:
         """

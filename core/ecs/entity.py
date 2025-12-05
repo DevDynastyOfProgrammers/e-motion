@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from core.ecs.component import COMPOMENTS
@@ -7,7 +7,9 @@ from core.ecs.component import COMPOMENTS
 @dataclass
 class EntityManager:
     next_entity_id = 0
-    components: dict[type[COMPOMENTS], dict[int, COMPOMENTS]] = {}  # # Dict for holding all components by type
+    components: dict[type[COMPOMENTS], dict[int, COMPOMENTS]] = field(
+        default_factory=dict
+    )  # # Dict for holding all components by type
 
     def create_entity(self) -> int:
         """Create a new entity and return its unique ID"""

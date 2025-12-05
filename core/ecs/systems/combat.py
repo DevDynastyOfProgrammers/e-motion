@@ -18,6 +18,7 @@ from core.events import ApplyAreaDamageEvent, ApplyDirectDamageEvent, RequestEnt
 from core.skill_data import AreaDamageEffectData
 
 
+@dataclass
 class DamageSystem:
     """Listens for damage events and applies them, considering multipliers."""
 

@@ -1,16 +1,13 @@
-# from .ai import EmotionRecognitionSystem, GameplayMappingSystem
-from .biofeedback import BiofeedbackSystem
-from .combat import DamageSystem, ProjectileImpactSystem
-from .input import PlayerInputSystem
-from .lifecycle import DeathSystem, LifetimeSystem
-from .movement import EnemyChaseSystem, MovementSystem, ProjectileMovementSystem
-from .render import DebugRenderSystem, RenderSystem
-from .skill import SkillExecutionSystem, SkillSystem
-from .spawning import EnemySpawningSystem, ProjectileSpawningSystem
+from core.ecs.systems.biofeedback import BiofeedbackSystem
+from core.ecs.systems.combat import DamageSystem, ProjectileImpactSystem
+from core.ecs.systems.input import PlayerInputSystem
+from core.ecs.systems.lifecycle import DeathSystem, LifetimeSystem
+from core.ecs.systems.movement import EnemyChaseSystem, MovementSystem, ProjectileMovementSystem
+from core.ecs.systems.render import DebugRenderSystem, RenderSystem
+from core.ecs.systems.skill import SkillExecutionSystem, SkillSystem
+from core.ecs.systems.spawning import EnemySpawningSystem, ProjectileSpawningSystem
 
 __all__ = [
-    'EmotionRecognitionSystem',
-    'GameplayMappingSystem',
     'DamageSystem',
     'ProjectileImpactSystem',
     'PlayerInputSystem',

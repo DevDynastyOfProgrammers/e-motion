@@ -55,7 +55,7 @@ class LifetimeSystem:
         """Обновляет время жизни сущностей и удаляет их по истечении времени."""
         entities = self.entity_manager.get_entities_with_components(LifetimeComponent)
         for entity, (lifetime,) in entities:
-            lifetime.time_remaining -= delta_time
-            if lifetime.time_remaining <= 0:
+            lifetime.duration -= delta_time
+            if lifetime.duration <= 0:
                 self.event_manager.post(RequestEntityRemovalEvent(entity))
                 logger.debug(f'Entity {entity} has expired and is scheduled for removal.')

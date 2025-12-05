@@ -1,5 +1,3 @@
-from typing import Any
-
 import cv2
 import numpy as np
 import torch
@@ -17,7 +15,7 @@ class EmotionRecognizer:
     Handles image preprocessing (BGR -> RGB, Resize, Normalize) and model execution.
     """
 
-    def __init__(self, model_path: str, device: str = 'cpu'):
+    def __init__(self, model_path: str, device: str = 'cpu') -> None:
         self.device = get_device(device)
 
         # Initialize Architecture

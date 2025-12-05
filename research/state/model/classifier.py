@@ -4,7 +4,6 @@ Advanced similarity based model for emotion classification.
 
 import numpy as np
 
-from ml.state.constants import cosine_config
 from research.state.model.analyzer import AdvancedPresetAnalyzer
 
 
@@ -13,7 +12,6 @@ class AdvancedEmotionClassifier:
 
     def __init__(self, preset_analyzer: AdvancedPresetAnalyzer) -> None:
         self.preset_analyzer = preset_analyzer
-        self.config = cosine_config
         self._epsilon = 1e-8  # Small constant to avoid division by zero
         self._expected_features = 6  # Expected number of basic features
 

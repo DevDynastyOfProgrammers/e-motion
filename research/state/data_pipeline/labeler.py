@@ -7,7 +7,7 @@ import aiohttp
 import pandas as pd
 from loguru import logger
 
-from ml.state.constants import service_config, settings
+from research.fer_loader import config
 
 
 class EmotionToGameParams:
@@ -15,7 +15,7 @@ class EmotionToGameParams:
 
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
-        self.api_url = settings.API_URL
+        self.api_url = config.API_URL
         self.headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
 
         self.presets: dict[str, list[float]] = {
@@ -138,7 +138,7 @@ Choose the optimal preset based on comprehensive emotional analysis:
                 self.api_url,
                 headers=self.headers,
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=service_config.api_timeout),
+                timeout=aiohttp.ClientTimeout(total=config.api_timeout),
             ) as response:
                 response.raise_for_status()
                 result = await response.json()

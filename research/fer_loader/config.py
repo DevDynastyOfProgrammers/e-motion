@@ -13,3 +13,5 @@ class Config:
     num_workers: int = 4
     pin_memory: bool = True
     force_rebuild_val: bool = False
+    api_url: str = ''
+    

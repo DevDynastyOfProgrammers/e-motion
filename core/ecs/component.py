@@ -85,7 +85,7 @@ class LifetimeComponent(Component):
     Gives an entity a limited time to live.
     """
 
-    time_remaining: float
+    duration: float
 
 
 COMPOMENTS = (

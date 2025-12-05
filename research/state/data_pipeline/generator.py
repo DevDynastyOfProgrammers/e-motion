@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 
-from ml.state.constants import data_config
+from research.fer_loader import config
 
 
 class EmotionalBalanceGenerator:
@@ -386,7 +386,7 @@ def main() -> None:
 
     logger.info('🚀 Starting emotional balance dataset generation...')
 
-    generator = EmotionalBalanceGenerator(random_state=data_config.random_state)
+    generator = EmotionalBalanceGenerator(random_state=config.random_state)
     df = generator.generate_dataset(total_samples=20000)
 
     # Analyze the emotional space

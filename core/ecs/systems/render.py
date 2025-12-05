@@ -35,10 +35,8 @@ class DebugRenderSystem:
 
     director: GameDirector
     event_manager: EventManager
-    bio_system = BiofeedbackSystem
+    bio_system: 'BiofeedbackSystem'
 
-    font = pygame.font.Font(None, 20)
-    title_font = pygame.font.Font(None, 28)
     color = (255, 255, 255)
 
     # UI Layout
@@ -51,7 +49,9 @@ class DebugRenderSystem:
     last_prediction: EmotionPrediction | None = None
     current_preset = 'Unknown'
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        self.font = pygame.font.Font(None, 20)
+        self.title_font = pygame.font.Font(None, 28)
         # Subscribe
         self.event_manager.subscribe(EmotionStateChangedEvent, self._on_emotion_update)
 

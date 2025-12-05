@@ -36,7 +36,7 @@ def get_train_augmentations(image_size: tuple) -> A.Compose:
     Strong augmentations for training.
     Includes Normalization to match Production Inference.
     """
-    h, w = image_size
+    height, width = image_size
     return A.Compose(
         [
             A.Rotate(limit=15, border_mode=cv2.BORDER_REFLECT_101, p=0.6),
@@ -55,7 +55,7 @@ def get_train_augmentations(image_size: tuple) -> A.Compose:
             ),
             A.RandomBrightnessContrast(brightness_limit=0.15, contrast_limit=0.15, p=0.6),
             # Geometry
-            A.Resize(h, w),
+            A.Resize(height, width),
             # Critical: Normalize using same stats as Inference
             A.Normalize(mean=NORMALIZATION_MEAN, std=NORMALIZATION_STD),
             ToTensorV2(),
@@ -67,8 +67,8 @@ def get_val_augmentations(image_size: tuple) -> A.Compose:
     """
     Validation transforms (Resize + Normalize only).
     """
-    h, w = image_size
-    return A.Compose([A.Resize(h, w), A.Normalize(mean=NORMALIZATION_MEAN, std=NORMALIZATION_STD), ToTensorV2()])
+    height, width = image_size
+    return A.Compose([A.Resize(height, width), A.Normalize(mean=NORMALIZATION_MEAN, std=NORMALIZATION_STD), ToTensorV2()])
 
 
 class FERImageDataset(Dataset):
@@ -82,7 +82,7 @@ class FERImageDataset(Dataset):
         self.transform = transform
         self.convert_to_3ch = convert_to_3ch
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.samples)
 
     def __getitem__(self, idx):

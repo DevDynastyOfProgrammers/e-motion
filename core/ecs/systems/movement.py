@@ -1,5 +1,5 @@
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from core.director import GameDirector
 from core.ecs.component import (
@@ -23,7 +23,7 @@ class MovementSystem:
     entity_manager: EntityManager
     director: GameDirector
 
-    movement_requests: dict[int, tuple[float, float]] = {}
+    movement_requests: dict[int, tuple[float, float]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.event_manager.subscribe(PlayerMoveIntentEvent, self.on_player_move)

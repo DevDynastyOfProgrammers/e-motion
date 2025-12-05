@@ -6,7 +6,7 @@ from settings import FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 
 
 class Game:
-    def __init__(self):
+    def __init__(self) -> None:
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
@@ -17,7 +17,7 @@ class Game:
         gameplay_state = GameplayState(self.state_manager)
         self.state_manager.push_state(gameplay_state)
 
-    def run(self):
+    def run(self) -> None:
         # Game loop
         while self.running:
             delta_time = self.clock.tick(FPS) / 1000.0

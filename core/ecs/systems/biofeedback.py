@@ -219,7 +219,7 @@ class BiofeedbackSystem:
     Runs on the Main Thread.
     """
 
-    def __init__(self, event_manager: EventManager, director: GameDirector):
+    def __init__(self, event_manager: EventManager, director: GameDirector) -> None:
         self.event_manager = event_manager
         self.director = director
 

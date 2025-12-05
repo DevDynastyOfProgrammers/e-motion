@@ -115,13 +115,10 @@ class EntityFactory:
         for comp_name, comp_args in projectile_data.components.items():
             comp_class = self.component_map.get(comp_name)
             if comp_class:
-                # We need to type-ignore or cast args here because kwargs unpacking
-                # into dynamic classes is hard for static analysis
                 if comp_class == TransformComponent:
                     comp_args['x'], comp_args['y'] = x, y
 
-                # Using type: ignore because we trust YAML structure matches Component __init__
-                component = comp_class(**comp_args)  # type: ignore
+                component = comp_class(**comp_args)
                 self.entity_manager.add_component(proj_id, component)
             else:
                 logger.warning(f"Unknown component type '{comp_name}' in projectile '{projectile_data.projectile_id}'")

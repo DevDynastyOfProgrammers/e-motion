@@ -9,7 +9,7 @@ from loguru import logger
 from tqdm import tqdm
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from ml.vision.config import DEFAULT_DEVICE, IMG_SIZE
+from ml.vision.config import IMG_SIZE
 from ml.vision.models import EmotionCNN
 from ml.vision.utils import get_device
 from research.vision.dataset import Config, build_dataloaders
