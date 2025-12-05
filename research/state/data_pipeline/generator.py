@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 
-from ml.state.config import data_config
+from ml.state.constants import data_config
 
 
 class EmotionalBalanceGenerator:

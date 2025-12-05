@@ -1,4 +1,4 @@
-from typing import Dict
+from dataclasses import dataclass
 
 from loguru import logger
 
@@ -15,18 +15,13 @@ from core.skill_data import (
 )
 
 
+@dataclass
 class SkillSystem:
     """Manages skill state (cooldowns, timers) and checks triggers."""
 
-    def __init__(
-        self,
-        event_manager: EventManager,
-        entity_manager: EntityManager,
-        skill_definitions: dict[str, SkillData],
-    ) -> None:
-        self.event_manager = event_manager
-        self.entity_manager = entity_manager
-        self.skill_definitions = skill_definitions
+    event_manager: EventManager
+    entity_manager: EntityManager
+    skill_definitions: dict[str, SkillData]
 
     def update(self, delta_time: float) -> None:
         entities = self.entity_manager.get_entities_with_components(SkillSetComponent)
@@ -61,18 +56,15 @@ class SkillSystem:
                         skill_set.periodic_timers[skill_id] = 0.0
 
 
+@dataclass
 class SkillExecutionSystem:
     """Listens for skill activation requests and executes their effects."""
 
-    def __init__(
-        self,
-        event_manager: EventManager,
-        entity_manager: EntityManager,
-        skill_definitions: dict[str, SkillData],
-    ) -> None:
-        self.event_manager = event_manager
-        self.entity_manager = entity_manager
-        self.skill_definitions = skill_definitions
+    event_manager: EventManager
+    entity_manager: EntityManager
+    skill_definitions: dict[str, SkillData]
+
+    def __post_init__(self) -> None:
         self.event_manager.subscribe(RequestSkillActivationEvent, self.on_skill_request)
 
     def on_skill_request(self, event: RequestSkillActivationEvent) -> None:

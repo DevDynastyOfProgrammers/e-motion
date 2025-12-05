@@ -1,7 +1,7 @@
 import logging
 
 
-def get_logger(name='fer_dataset'):
+def get_logger(name='fer_dataset') -> logging.Logger:
     logger = logging.getLogger(name)
     if not logger.handlers:
         handler = logging.StreamHandler()

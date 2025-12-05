@@ -31,7 +31,7 @@ class BiofeedbackWorker(threading.Thread):
     DEBUG_WIDTH: int = 160
     DEBUG_HEIGHT: int = 120
 
-    def __init__(self, result_queue: queue.Queue, stop_event: threading.Event):
+    def __init__(self, result_queue: queue.Queue, stop_event: threading.Event) -> None:
         super().__init__(name='BiofeedbackWorker', daemon=True)
         self.result_queue = result_queue
         self.stop_event = stop_event
@@ -223,7 +223,7 @@ class BiofeedbackSystem:
         self.event_manager = event_manager
         self.director = director
 
-        self.result_queue = queue.Queue(maxsize=1)
+        self.result_queue: queue.Queue = queue.Queue(maxsize=1)
         self.stop_event = threading.Event()
 
         self.worker = BiofeedbackWorker(self.result_queue, self.stop_event)

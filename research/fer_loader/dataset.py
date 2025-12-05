@@ -1,23 +1,18 @@
-import os
-
 import cv2
-import torch
 from torch.utils.data import Dataset
-
-from research.fer_loader.utils import ensure_dir, set_seed
 
 
 class FERImageDataset(Dataset):
-    def __init__(self, samples, transform=None, grayscale=True, convert_to_3ch=False):
+    def __init__(self, samples, transform=None, grayscale=True, convert_to_3ch=False) -> None:
         self.samples = samples
         self.transform = transform
         self.grayscale = grayscale
         self.convert_to_3ch = convert_to_3ch
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.samples)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> tuple[float, str]:
         path, label = self.samples[idx]
         img = cv2.imread(path, cv2.IMREAD_GRAYSCALE if self.grayscale else cv2.IMREAD_COLOR)
         if img is None:

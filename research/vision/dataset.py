@@ -3,7 +3,6 @@ import random
 import shutil
 import sys
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 import cv2
 import numpy as np
@@ -32,7 +31,7 @@ class Config:
     force_rebuild_val: bool = False
 
 
-def get_train_augmentations(image_size: tuple):
+def get_train_augmentations(image_size: tuple) -> A.Compose:
     """
     Strong augmentations for training.
     Includes Normalization to match Production Inference.
@@ -64,7 +63,7 @@ def get_train_augmentations(image_size: tuple):
     )
 
 
-def get_val_augmentations(image_size: tuple):
+def get_val_augmentations(image_size: tuple) -> A.Compose:
     """
     Validation transforms (Resize + Normalize only).
     """
@@ -78,7 +77,7 @@ class FERImageDataset(Dataset):
     Expects list of (image_path, label_idx).
     """
 
-    def __init__(self, samples: list[tuple[str, int]], transform=None, convert_to_3ch=True):
+    def __init__(self, samples: list[tuple[str, int]], transform=None, convert_to_3ch=True) -> None:
         self.samples = samples
         self.transform = transform
         self.convert_to_3ch = convert_to_3ch
@@ -114,13 +113,13 @@ class FERImageDataset(Dataset):
 # --- UTILS FOR FILE HANDLING ---
 
 
-def ensure_dir(path: str, remove_if_exists: bool = False):
+def ensure_dir(path: str, remove_if_exists: bool = False) -> None:
     if os.path.exists(path) and remove_if_exists:
         shutil.rmtree(path)
     os.makedirs(path, exist_ok=True)
 
 
-def set_seed(seed: int):
+def set_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -128,7 +127,7 @@ def set_seed(seed: int):
         torch.cuda.manual_seed_all(seed)
 
 
-def create_val_split(root_dir: str, val_ratio: float, seed: int, force: bool = False):
+def create_val_split(root_dir: str, val_ratio: float, seed: int, force: bool = False) -> None:
     """
     Splits 'train' folder into 'train' and 'val'.
     """

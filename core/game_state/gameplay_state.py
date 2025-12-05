@@ -31,7 +31,7 @@ class GameplayState:
     Manages the Entity-Component-System architecture and the Game Director.
     """
 
-    def __init__(self, state_manager) -> None:
+    def __init__(self, state_manager: EventManager) -> None:
         self.state_manager = state_manager
 
         # 1. Core Services Initialization
@@ -92,7 +92,6 @@ class GameplayState:
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         """Process raw PyGame events."""
-        pass
 
     def update(self, delta_time: float) -> None:
         """Update the state logic."""
@@ -130,5 +129,5 @@ class GameplayState:
         self.render_system.draw(self.entity_manager, screen)
         self.debug_render_system.draw(screen)
 
-    def on_exit(self):
+    def on_exit(self) -> None:
         self.biofeedback_system.shutdown()

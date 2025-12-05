@@ -3,7 +3,7 @@ Game Design Data: Maps Logic States ("TENSION") to Gameplay Multipliers.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Final, List
+from typing import Final
 
 
 @dataclass(frozen=True)

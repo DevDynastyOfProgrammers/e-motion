@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 
-def set_seed(seed: int):
+def set_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -14,7 +14,7 @@ def set_seed(seed: int):
         torch.cuda.manual_seed_all(seed)
 
 
-def ensure_dir(path: str, remove_if_exists: bool = False):
+def ensure_dir(path: str, remove_if_exists: bool = False) -> None:
     if os.path.exists(path):
         if remove_if_exists:
             shutil.rmtree(path)

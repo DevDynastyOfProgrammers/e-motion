@@ -1,9 +1,7 @@
-from typing import Dict, Tuple
-
 import numpy as np
 from loguru import logger
 
-from ml.state.config import EPSILON, WEIGHT_COSINE, WEIGHT_EUCLIDEAN
+from ml.state.constants import EPSILON, WEIGHT_COSINE, WEIGHT_EUCLIDEAN
 
 
 class AdvancedPresetAnalyzer:

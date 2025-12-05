@@ -8,8 +8,6 @@ from core.skill_data import AnyEffectData
 class Event:
     """Base immutable class for all events."""
 
-    pass
-
 
 # --- ML & Input Events ---
 

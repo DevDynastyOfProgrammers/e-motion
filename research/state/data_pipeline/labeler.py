@@ -1,13 +1,13 @@
 import asyncio
 import os
 import random
-from typing import Any, Tuple
+from typing import Any
 
 import aiohttp
 import pandas as pd
 from loguru import logger
 
-from ml.state.config import service_config, settings
+from ml.state.constants import service_config, settings
 
 
 class EmotionToGameParams:

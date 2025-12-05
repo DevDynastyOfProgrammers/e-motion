@@ -3,7 +3,7 @@ from typing import Type
 import yaml
 from loguru import logger
 
-from core.entity_data import EntityData, EntityTransformData  # <-- NEW IMPORT
+from core.entity_data import EntityData, EntityTransformData
 from core.skill_data import (
     AnyEffectData,
     AnyTriggerData,

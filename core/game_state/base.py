@@ -1,4 +1,4 @@
-from typing import List, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 import pygame
 
@@ -15,18 +15,15 @@ class GameState(Protocol):
         """
         Process raw PyGame events.
         """
-        ...
 
     def update(self, delta_time: float) -> None:
         """
         Update the state logic.
         :param delta_time: Time elapsed since the last frame in seconds.
         """
-        ...
 
     def draw(self, screen: pygame.Surface) -> None:
         """
         Render the state content to the screen.
         :param screen: The main PyGame display surface.
         """
-        ...

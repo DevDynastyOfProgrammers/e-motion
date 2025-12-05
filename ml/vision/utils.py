@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, Union
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -25,7 +25,7 @@ def load_checkpoint(model: nn.Module, path: str, device: torch.device) -> nn.Mod
 
     try:
         # Load everything to memory first
-        checkpoint: Union[dict[str, Any], nn.Module] = torch.load(path, map_location=device)
+        checkpoint: dict[str, Any] | nn.Module = torch.load(path, map_location=device)
 
         state_dict = {}
 

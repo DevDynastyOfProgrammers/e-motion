@@ -1,6 +1,6 @@
 import math
 import random
-from typing import Dict
+from dataclasses import dataclass
 
 from loguru import logger
 
@@ -14,20 +14,21 @@ from core.skill_data import ProjectileData, SpawnProjectileEffectData
 from settings import SCREEN_HEIGHT, SCREEN_WIDTH
 
 
+@dataclass
 class EnemySpawningSystem:
     """Manages the spawning of enemy waves over time."""
 
-    def __init__(self, entity_factory: EntityFactory, director: GameDirector) -> None:
-        self.factory = entity_factory
-        self.director = director
+    factory: EntityFactory
+    director: GameDirector
 
-        self.time_since_last_single_spawn = 0.0
-        self.base_single_spawn_interval = 3.0
+    time_since_last_single_spawn: float = 0.0
+    base_single_spawn_interval: float = 3.0
 
-        self.time_since_last_group_spawn = 0.0
-        self.base_group_spawn_interval = 10.0
-        self.group_size = 5
-        self.group_spawn_radius = 100.0
+    time_since_last_group_spawn: float = 0.0
+    base_group_spawn_interval: float = 10.0
+
+    group_size: int = 5
+    group_spawn_radius: float = 100.0
 
     def update(self, delta_time: float) -> None:
         spawn_rate_multiplier = self.director.state.spawn_rate_multiplier
@@ -73,20 +74,16 @@ class EnemySpawningSystem:
             self.factory.create_enemy(center_x + offset_x, center_y + offset_y)
 
 
+@dataclass
 class ProjectileSpawningSystem:
     """Listens for SpawnProjectileEvent and creates projectiles."""
 
-    def __init__(
-        self,
-        event_manager: EventManager,
-        entity_manager: EntityManager,
-        projectile_definitions: dict[str, ProjectileData],
-        factory: EntityFactory,
-    ) -> None:
-        self.event_manager = event_manager
-        self.entity_manager = entity_manager
-        self.projectile_definitions = projectile_definitions
-        self.factory = factory
+    event_manager: EventManager
+    entity_manager: EntityManager
+    projectile_definitions: dict[str, ProjectileData]
+    factory: EntityFactory
+
+    def __post_init__(self) -> None:
         self.event_manager.subscribe(SpawnProjectileEvent, self.on_spawn_projectile)
 
     def on_spawn_projectile(self, event: SpawnProjectileEvent) -> None:

@@ -1,4 +1,4 @@
-from dataclasses import fields
+from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING
 
 import pygame
@@ -6,6 +6,7 @@ import pygame
 from core.director import GameDirector
 from core.ecs.component import RenderComponent, TransformComponent
 from core.ecs.entity import EntityManager
+from core.emotion import EmotionPrediction
 from core.event_manager import EventManager
 from core.events import EmotionStateChangedEvent
 
@@ -20,44 +21,44 @@ class RenderSystem:
         screen.fill((20, 20, 20))  # Dark background
 
         entities = entity_manager.get_entities_with_components(TransformComponent, RenderComponent)
-        for entity, (transform, render) in entities:
+        for _, (transform, render) in entities:
             rect = pygame.Rect(transform.x, transform.y, transform.width, transform.height)
             pygame.draw.rect(screen, render.color, rect)
 
 
+@dataclass
 class DebugRenderSystem:
     """
     Renders real-time debug information about ML and Game State.
     Visualizes emotion probabilities as bars and shows the active Game Preset.
     """
 
-    def __init__(self, director: GameDirector, event_manager: EventManager, bio_system: 'BiofeedbackSystem') -> None:
-        self.director = director
-        self.event_manager = event_manager
-        self.bio_system = bio_system
+    director: GameDirector
+    event_manager: EventManager
+    bio_system = BiofeedbackSystem
 
-        self.font = pygame.font.Font(None, 20)
-        self.title_font = pygame.font.Font(None, 28)
-        self.color = (255, 255, 255)
+    font = pygame.font.Font(None, 20)
+    title_font = pygame.font.Font(None, 28)
+    color = (255, 255, 255)
 
-        # UI Layout
-        self.x_offset = 10
-        self.y_offset = 10
-        self.bar_width = 100
-        self.bar_height = 10
+    # UI Layout
+    x_offset = 10
+    y_offset = 10
+    bar_width = 100
+    bar_height = 10
 
-        # Data storage
-        self.last_prediction = None
-        self.current_preset = 'Unknown'
+    # Data storage
+    last_prediction: EmotionPrediction | None = None
+    current_preset = 'Unknown'
 
+    def __post_init__(self):
         # Subscribe
         self.event_manager.subscribe(EmotionStateChangedEvent, self._on_emotion_update)
 
-    def _on_emotion_update(self, event: EmotionStateChangedEvent):
-        self.last_prediction = event.prediction
+    def _on_emotion_update(self, event: EmotionStateChangedEvent) -> None:
         # We assume the last computed multipliers reflect the current preset
         # Ideally, we would pass the preset name in an event, but for debug we can infer or wait
-        pass
+        self.last_prediction = event.prediction
 
     def draw(self, screen: pygame.Surface) -> None:
         # Background
@@ -71,7 +72,7 @@ class DebugRenderSystem:
 
         # --- 0. CAMERA FEED ---
         # Берем кадр из bio_system
-        if self.bio_system.current_debug_frame is not None:
+        if self.bio_system.current_debug_frame:
             try:
                 # numpy array -> pygame surface
                 frame_surf = pygame.surfarray.make_surface(self.bio_system.current_debug_frame)

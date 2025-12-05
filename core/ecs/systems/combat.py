@@ -1,4 +1,5 @@
 import math
+from dataclasses import dataclass
 
 from loguru import logger
 
@@ -20,10 +21,11 @@ from core.skill_data import AreaDamageEffectData
 class DamageSystem:
     """Listens for damage events and applies them, considering multipliers."""
 
-    def __init__(self, event_manager: EventManager, entity_manager: EntityManager, director: GameDirector) -> None:
-        self.event_manager = event_manager
-        self.entity_manager = entity_manager
-        self.director = director
+    event_manager: EventManager
+    entity_manager: EntityManager
+    director: GameDirector
+
+    def __post_init__(self) -> None:
         self.event_manager.subscribe(ApplyAreaDamageEvent, self.on_area_damage)
         self.event_manager.subscribe(ApplyDirectDamageEvent, self.on_direct_damage)
 
@@ -66,11 +68,13 @@ class DamageSystem:
             if target_id == event.caster_id:
                 continue
 
-            if self._is_valid_target(target_id, effect_data.target_group):
-                distance = math.hypot(caster_pos[0] - transform.x, caster_pos[1] - transform.y)
-                if distance <= effect_data.radius:
-                    health.current_hp -= final_damage
-                    logger.debug(f'Entity {target_id} took {final_damage} AREA damage! HP: {health.current_hp}')
+            if not self._is_valid_target(target_id, effect_data.target_group):
+                continue
+
+            distance = math.hypot(caster_pos[0] - transform.x, caster_pos[1] - transform.y)
+            if distance <= effect_data.radius:
+                health.current_hp -= final_damage
+                logger.debug(f'Entity {target_id} took {final_damage} AREA damage! HP: {health.current_hp}')
 
     def on_direct_damage(self, event: ApplyDirectDamageEvent) -> None:
         health = self.entity_manager.get_component(event.target_id, HealthComponent)
@@ -85,12 +89,12 @@ class DamageSystem:
             logger.debug(f'Entity {event.target_id} took {final_damage} DIRECT damage! HP: {health.current_hp}')
 
 
+@dataclass
 class ProjectileImpactSystem:
     """Checks for projectile collisions and posts damage events."""
 
-    def __init__(self, event_manager: EventManager, entity_manager: EntityManager) -> None:
-        self.event_manager = event_manager
-        self.entity_manager = entity_manager
+    event_manager: EventManager
+    entity_manager: EntityManager
 
     def _is_valid_target(self, entity_id: int, target_group: str) -> bool:
         """Duplicated logic for now, could be moved to a static helper or Entity utils."""
@@ -109,7 +113,7 @@ class ProjectileImpactSystem:
         targets = list(self.entity_manager.get_entities_with_components(HealthComponent, TransformComponent))
 
         for proj_id, (proj, proj_trans, proj_damage) in projectiles:
-            for target_id, (health, target_trans) in targets:
+            for target_id, (_, target_trans) in targets:
                 if not self._is_valid_target(target_id, proj_damage.target_group):
                     continue
 

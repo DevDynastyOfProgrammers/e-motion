@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any
 
 import cv2
 import numpy as np
@@ -36,7 +36,7 @@ class EmotionRecognizer:
             ]
         )
 
-    def predict(self, frame: np.ndarray) -> dict[str, Union[str, float]]:
+    def predict(self, frame: np.ndarray) -> dict[str, str | float]:
         """
         Predicts emotion from a raw OpenCV frame (BGR).
         Returns a dictionary with probabilities and the dominant class.

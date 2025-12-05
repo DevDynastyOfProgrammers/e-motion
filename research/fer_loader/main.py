@@ -13,7 +13,7 @@ from research.fer_loader.logger import get_logger
 logger = get_logger('fer_main')
 
 
-def extract_archive(zip_path: Path, target_dir: Path):
+def extract_archive(zip_path: Path, target_dir: Path) -> None:
     """Safe extraction logic."""
     logger.info(f'📦 Extracting {zip_path} to {target_dir}...')
 
@@ -34,7 +34,7 @@ def extract_archive(zip_path: Path, target_dir: Path):
     logger.info('✅ Extraction complete.')
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description='FER-2013 Setup using Team Loader')
     parser.add_argument('--source', required=True, help='Path to FER-2013.zip')
     parser.add_argument('--val-ratio', type=float, default=0.1, help='Validation split ratio')

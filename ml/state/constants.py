@@ -2,7 +2,7 @@
 Runtime configuration for the Emotion State Model.
 """
 
-from typing import Final, List
+from typing import Final
 
 # Features expected by the model
 # 1. Confidence

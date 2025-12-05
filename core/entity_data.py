@@ -18,7 +18,7 @@ class EntityData:
     transform: EntityTransformData
     max_hp: int
     color: tuple[int, int, int]
-    # tags: list[str]
+
     # List of extra marker components like 'PlayerInput' or 'AI'
     components: list[str] = field(default_factory=list)
     skills: list[str] = field(default_factory=list)
