@@ -1,30 +1,32 @@
 import math
-from core.ecs.entity import EntityManager
-from core.ecs.component import (
-    TransformComponent,
-    PlayerInputComponent,
-    AIComponent,
-    ProjectileComponent,
-)
-from core.event_manager import EventManager
+from dataclasses import dataclass, field
+
 from core.director import GameDirector
+from core.ecs.component import (
+    AIComponent,
+    PlayerInputComponent,
+    ProjectileComponent,
+    TransformComponent,
+)
+from core.ecs.entity import EntityManager
+from core.event_manager import EventManager
 from core.events import PlayerMoveIntentEvent
 
 
+@dataclass
 class MovementSystem:
     """
     Handles movement requests and updates TransformComponents.
     """
 
-    def __init__(
-        self, event_manager: EventManager, entity_manager: EntityManager, director: GameDirector
-    ):
-        self.event_manager = event_manager
-        self.entity_manager = entity_manager
-        self.director = director
+    event_manager: EventManager
+    entity_manager: EntityManager
+    director: GameDirector
 
+    movement_requests: dict[int, tuple[float, float]] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
         self.event_manager.subscribe(PlayerMoveIntentEvent, self.on_player_move)
-        self.movement_requests: dict[int, tuple[float, float]] = {}
 
     def on_player_move(self, event: PlayerMoveIntentEvent) -> None:
         self.movement_requests[event.entity_id] = event.direction
@@ -43,22 +45,20 @@ class MovementSystem:
         self.movement_requests.clear()
 
 
+@dataclass
 class EnemyChaseSystem:
     """Processes AI-controlled enemies to chase the player."""
 
-    def __init__(self, director: GameDirector) -> None:
-        self.director = director
+    director: GameDirector
 
-    def update(
-        self, entity_manager: EntityManager, player_transform: TransformComponent, delta_time: float
-    ) -> None:
+    def update(self, entity_manager: EntityManager, player_transform: TransformComponent, delta_time: float) -> None:
         if not player_transform:
             return
 
         speed_multiplier = self.director.state.enemy_speed_multiplier
 
         enemies = entity_manager.get_entities_with_components(AIComponent, TransformComponent)
-        for entity, (ai_comp, transform) in enemies:
+        for _, (_, transform) in enemies:
             dx = player_transform.x - transform.x
             dy = player_transform.y - transform.y
 
@@ -74,9 +74,7 @@ class ProjectileMovementSystem:
     """Moves all entities with a ProjectileComponent."""
 
     def update(self, entity_manager: EntityManager, delta_time: float) -> None:
-        projectiles = entity_manager.get_entities_with_components(
-            ProjectileComponent, TransformComponent
-        )
-        for entity, (proj, transform) in projectiles:
+        projectiles = entity_manager.get_entities_with_components(ProjectileComponent, TransformComponent)
+        for _, (proj, transform) in projectiles:
             transform.x += proj.dx * transform.velocity * delta_time
             transform.y += proj.dy * transform.velocity * delta_time

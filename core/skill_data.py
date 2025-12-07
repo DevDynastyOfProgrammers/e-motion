@@ -5,14 +5,10 @@ from dataclasses import dataclass, field
 class TriggerData:
     """Base class for skill activation triggers."""
 
-    pass
-
 
 @dataclass
 class AutoOnCooldownTriggerData(TriggerData):
     """Trigger type: AUTO_ON_COOLDOWN"""
-
-    pass
 
 
 @dataclass
@@ -30,8 +26,6 @@ class EffectData:
     """
     Base dataclass for all skill effect data.
     """
-
-    pass
 
 
 @dataclass

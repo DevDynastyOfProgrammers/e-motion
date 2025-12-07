@@ -1,29 +1,28 @@
 import pygame
-from core.ecs.entity import EntityManager
-from core.ecs.factory import EntityFactory
-from core.event_manager import EventManager
+
 from core.data_loader import DataLoader
 from core.director import GameDirector
 from core.ecs.component import TransformComponent
-
+from core.ecs.entity import EntityManager
+from core.ecs.factory import EntityFactory
 from core.ecs.systems import (
-    RenderSystem,
-    PlayerInputSystem,
-    MovementSystem,
-    EnemySpawningSystem,
-    EnemyChaseSystem,
-    DeathSystem,
-    SkillSystem,
-    SkillExecutionSystem,
+    BiofeedbackSystem,
     DamageSystem,
-    ProjectileSpawningSystem,
-    ProjectileMovementSystem,
-    ProjectileImpactSystem,
-    LifetimeSystem,
-    EmotionRecognitionSystem,
-    GameplayMappingSystem,
+    DeathSystem,
     DebugRenderSystem,
+    EnemyChaseSystem,
+    EnemySpawningSystem,
+    LifetimeSystem,
+    MovementSystem,
+    PlayerInputSystem,
+    ProjectileImpactSystem,
+    ProjectileMovementSystem,
+    ProjectileSpawningSystem,
+    RenderSystem,
+    SkillExecutionSystem,
+    SkillSystem,
 )
+from core.event_manager import EventManager
 
 
 class GameplayState:
@@ -32,7 +31,7 @@ class GameplayState:
     Manages the Entity-Component-System architecture and the Game Director.
     """
 
-    def __init__(self, state_manager) -> None:
+    def __init__(self, state_manager: EventManager) -> None:
         self.state_manager = state_manager
 
         # 1. Core Services Initialization
@@ -42,15 +41,11 @@ class GameplayState:
 
         # 2. Data Loading
         data_loader = DataLoader()
-        self.skill_definitions, self.projectile_definitions = data_loader.load_game_data(
-            "skills.yaml"
-        )
-        self.entity_definitions = data_loader.load_entities("entities.yaml")
+        self.skill_definitions, self.projectile_definitions = data_loader.load_game_data('skills.yaml')
+        self.entity_definitions = data_loader.load_entities('entities.yaml')
 
         # 3. Factory Setup
-        self.entity_factory = EntityFactory(
-            self.entity_manager, self.director, self.entity_definitions
-        )
+        self.entity_factory = EntityFactory(self.entity_manager, self.director, self.entity_definitions)
 
         # 4. Systems Initialization
         self._init_systems()
@@ -63,13 +58,12 @@ class GameplayState:
 
         # Input & AI (ML)
         self.player_input_system = PlayerInputSystem(self.event_manager)
-        self.emotion_recognition_system = EmotionRecognitionSystem(self.event_manager)
-        self.gameplay_mapping_system = GameplayMappingSystem(self.event_manager, self.director)
+        # self.emotion_recognition_system = EmotionRecognitionSystem(self.event_manager)
+        # self.gameplay_mapping_system = GameplayMappingSystem(self.event_manager, self.director)
+        self.biofeedback_system = BiofeedbackSystem(self.event_manager, self.director)
 
         # Logic & Mechanics
-        self.skill_system = SkillSystem(
-            self.event_manager, self.entity_manager, self.skill_definitions
-        )
+        self.skill_system = SkillSystem(self.event_manager, self.entity_manager, self.skill_definitions)
         self.skill_execution_system = SkillExecutionSystem(
             self.event_manager, self.entity_manager, self.skill_definitions
         )
@@ -77,14 +71,10 @@ class GameplayState:
         self.lifetime_system = LifetimeSystem(self.event_manager, self.entity_manager)
 
         # Movement & Physics
-        self.movement_system = MovementSystem(
-            self.event_manager, self.entity_manager, self.director
-        )
+        self.movement_system = MovementSystem(self.event_manager, self.entity_manager, self.director)
         self.enemy_chase_system = EnemyChaseSystem(self.director)
         self.projectile_movement_system = ProjectileMovementSystem()
-        self.projectile_impact_system = ProjectileImpactSystem(
-            self.event_manager, self.entity_manager
-        )
+        self.projectile_impact_system = ProjectileImpactSystem(self.event_manager, self.entity_manager)
         self.projectile_spawning_system = ProjectileSpawningSystem(
             self.event_manager,
             self.entity_manager,
@@ -98,18 +88,18 @@ class GameplayState:
 
         # Rendering
         self.render_system = RenderSystem()
-        self.debug_render_system = DebugRenderSystem(self.director, self.gameplay_mapping_system)
+        self.debug_render_system = DebugRenderSystem(self.director, self.event_manager, self.biofeedback_system)
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         """Process raw PyGame events."""
-        pass
 
     def update(self, delta_time: float) -> None:
         """Update the state logic."""
 
         # --- 1. Update ML & Director ---
-        self.emotion_recognition_system.update(delta_time)
-        self.gameplay_mapping_system.update(delta_time)
+        # self.emotion_recognition_system.update(delta_time)
+        # self.gameplay_mapping_system.update(delta_time)
+        self.biofeedback_system.update(delta_time)
         self.director.update(delta_time)
 
         # --- 2. Update Input & Logic ---
@@ -138,3 +128,6 @@ class GameplayState:
         """Render the state content to the screen."""
         self.render_system.draw(self.entity_manager, screen)
         self.debug_render_system.draw(screen)
+
+    def on_exit(self) -> None:
+        self.biofeedback_system.shutdown()

@@ -1,23 +1,24 @@
-import pygame
 import math
-from core.ecs.entity import EntityManager
+from dataclasses import dataclass
+
+import pygame
+
 from core.ecs.component import PlayerInputComponent, TransformComponent
+from core.ecs.entity import EntityManager
 from core.event_manager import EventManager
 from core.events import PlayerMoveIntentEvent
 
 
+@dataclass
 class PlayerInputSystem:
     """Processes player input and posts movement intent events."""
 
-    def __init__(self, event_manager: EventManager) -> None:
-        self.event_manager = event_manager
+    event_manager: EventManager
 
     def update(self, entity_manager: EntityManager) -> None:
         # Find the player entity
-        entities = entity_manager.get_entities_with_components(
-            PlayerInputComponent, TransformComponent
-        )
-        for entity, (input_comp, transform) in entities:
+        entities = entity_manager.get_entities_with_components(PlayerInputComponent, TransformComponent)
+        for entity, (_, _) in entities:
             keys = pygame.key.get_pressed()
             dx, dy = 0.0, 0.0
 

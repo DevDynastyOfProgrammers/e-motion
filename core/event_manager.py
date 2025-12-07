@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Callable, Type, Any
+from typing import Any, Callable, Type
+
 from core.events import Event
 
 # Define a type alias for event handlers
@@ -49,4 +50,4 @@ class EventManager:
             # Find subscribers for this exact event type
             if event_type in self.subscribers:
                 for handler in self.subscribers[event_type]:
-                    handler(event)  # type: ignore
+                    handler(event)

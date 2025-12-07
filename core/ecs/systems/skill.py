@@ -1,30 +1,27 @@
-from typing import Dict
+from dataclasses import dataclass
+
 from loguru import logger
-from core.ecs.entity import EntityManager
+
 from core.ecs.component import SkillSetComponent, TransformComponent
+from core.ecs.entity import EntityManager
 from core.event_manager import EventManager
-from core.events import RequestSkillActivationEvent, ApplyAreaDamageEvent, SpawnProjectileEvent
+from core.events import ApplyAreaDamageEvent, RequestSkillActivationEvent, SpawnProjectileEvent
 from core.skill_data import (
-    SkillData,
+    AreaDamageEffectData,
     AutoOnCooldownTriggerData,
     PeriodicTriggerData,
-    AreaDamageEffectData,
+    SkillData,
     SpawnProjectileEffectData,
 )
 
 
+@dataclass
 class SkillSystem:
     """Manages skill state (cooldowns, timers) and checks triggers."""
 
-    def __init__(
-        self,
-        event_manager: EventManager,
-        entity_manager: EntityManager,
-        skill_definitions: Dict[str, SkillData],
-    ) -> None:
-        self.event_manager = event_manager
-        self.entity_manager = entity_manager
-        self.skill_definitions = skill_definitions
+    event_manager: EventManager
+    entity_manager: EntityManager
+    skill_definitions: dict[str, SkillData]
 
     def update(self, delta_time: float) -> None:
         entities = self.entity_manager.get_entities_with_components(SkillSetComponent)
@@ -59,18 +56,15 @@ class SkillSystem:
                         skill_set.periodic_timers[skill_id] = 0.0
 
 
+@dataclass
 class SkillExecutionSystem:
     """Listens for skill activation requests and executes their effects."""
 
-    def __init__(
-        self,
-        event_manager: EventManager,
-        entity_manager: EntityManager,
-        skill_definitions: Dict[str, SkillData],
-    ) -> None:
-        self.event_manager = event_manager
-        self.entity_manager = entity_manager
-        self.skill_definitions = skill_definitions
+    event_manager: EventManager
+    entity_manager: EntityManager
+    skill_definitions: dict[str, SkillData]
+
+    def __post_init__(self) -> None:
         self.event_manager.subscribe(RequestSkillActivationEvent, self.on_skill_request)
 
     def on_skill_request(self, event: RequestSkillActivationEvent) -> None:
@@ -99,6 +93,4 @@ class SkillExecutionSystem:
                     )
                 )
             elif isinstance(effect, SpawnProjectileEffectData):
-                self.event_manager.post(
-                    SpawnProjectileEvent(caster_id=event.entity_id, effect_data=effect)
-                )
+                self.event_manager.post(SpawnProjectileEvent(caster_id=event.entity_id, effect_data=effect))

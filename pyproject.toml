@@ -24,6 +24,7 @@ dependencies = [
     "aiohttp>=3.13.2",
     "plotly>=6.5.0",
     "scipy>=1.15.3",
+    "albumentations>=2.0.8",
 ]
 
 [dependency-groups]
@@ -48,5 +49,9 @@ check_untyped_defs = true          # Check the body of untyped functions
 line-length = 120
 target-version = "py313"
 
-[tool.uv.workspace]
-members = ["game_balancing_system"]
+[tool.ruff.lint]
+fixable = ["ALL"]
+select = ["I"]
+
+[tool.ruff.format]
+quote-style = "single"

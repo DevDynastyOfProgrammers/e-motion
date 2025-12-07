@@ -1,13 +1,12 @@
 from dataclasses import dataclass
-from core.skill_data import AnyEffectData
+
 from core.emotion import EmotionPrediction
+from core.skill_data import AnyEffectData
 
 
 @dataclass(frozen=True)
 class Event:
     """Base immutable class for all events."""
-
-    pass
 
 
 # --- ML & Input Events ---
