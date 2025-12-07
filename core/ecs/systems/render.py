@@ -62,7 +62,7 @@ class DebugRenderSystem:
 
     def draw(self, screen: pygame.Surface) -> None:
         # Background
-        bg_rect = pygame.Rect(5, 5, 250, 550)  # Увеличили высоту, чтобы влезла камера
+        bg_rect = pygame.Rect(5, 5, 250, 550)  # Fixed size for debug panel
         s = pygame.Surface((bg_rect.width, bg_rect.height))
         s.set_alpha(180)
         s.fill((0, 0, 0))
@@ -71,13 +71,13 @@ class DebugRenderSystem:
         y = self.y_offset
 
         # --- 0. CAMERA FEED ---
-        # Берем кадр из bio_system
-        if self.bio_system.current_debug_frame:
+        # Take frame from bio_system
+        if self.bio_system.current_debug_frame is not None:
             try:
                 # numpy array -> pygame surface
                 frame_surf = pygame.surfarray.make_surface(self.bio_system.current_debug_frame)
                 screen.blit(frame_surf, (self.x_offset, y))
-                y += 130  # Смещаем текст вниз (высота картинки 120 + 10 отступ)
+                y += 130  # Move text down (image height 120 + 10 padding)
             except Exception:
                 pass
         else:
