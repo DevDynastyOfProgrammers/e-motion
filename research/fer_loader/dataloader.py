@@ -12,6 +12,12 @@ logger = get_logger()
 
 
 def create_val_split(root_dir, val_ratio, seed, force=False):
+    """
+    Create validation split by moving a fraction of images
+    from train/ into val/ preserving class structure.
+
+    Does nothing if val/ already exists unless force=True.
+    """
     train_dir = os.path.join(root_dir, 'train')
     val_dir = os.path.join(root_dir, 'val')
     if os.path.exists(val_dir) and not force:
@@ -37,6 +43,9 @@ def create_val_split(root_dir, val_ratio, seed, force=False):
 
 
 def list_image_samples(root_split_dir, label_map):
+    """
+    Collect (image_path, class_index) pairs from a dataset split directory.
+    """
     samples = []
     for cls, idx in label_map.items():
         class_dir = os.path.join(root_split_dir, cls)
@@ -49,6 +58,10 @@ def list_image_samples(root_split_dir, label_map):
 
 
 def build_dataloaders(cfg):
+    """
+    Build PyTorch DataLoaders for train, validation and test splits
+    using configuration parameters.
+    """
     set_seed(cfg.random_state)
     label_names = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
     label_map = {name: i for i, name in enumerate(label_names)}
