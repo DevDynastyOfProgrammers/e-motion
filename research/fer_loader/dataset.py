@@ -3,6 +3,12 @@ from torch.utils.data import Dataset
 
 
 class FERImageDataset(Dataset):
+    """
+    PyTorch Dataset for FER image classification.
+
+    Loads images, applies optional augmentations,
+    and returns normalized tensors with class labels.
+    """
     def __init__(self, samples, transform=None, grayscale=True, convert_to_3ch=False) -> None:
         self.samples = samples
         self.transform = transform
