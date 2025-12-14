@@ -15,7 +15,7 @@ logger = get_logger('fer_main')
 
 def extract_archive(zip_path: Path, target_dir: Path) -> None:
     """Safe extraction logic."""
-    logger.info(f'📦 Extracting {zip_path} to {target_dir}...')
+    logger.info(f'Extracting {zip_path} to {target_dir}...')
 
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         members = zip_ref.namelist()
@@ -26,12 +26,12 @@ def extract_archive(zip_path: Path, target_dir: Path) -> None:
 
     if is_nested:
         nested_dir = target_dir / root_folder
-        logger.info(f"📂 Detected nested folder '{root_folder}'. Moving files up...")
+        logger.info(f"Detected nested folder '{root_folder}'. Moving files up...")
         for item in os.listdir(nested_dir):
             shutil.move(str(nested_dir / item), str(target_dir))
         os.rmdir(nested_dir)
 
-    logger.info('✅ Extraction complete.')
+    logger.info('Extraction complete.')
 
 
 def main() -> None:
@@ -41,51 +41,49 @@ def main() -> None:
     parser.add_argument('--bs', type=int, default=64, help='Batch size for check')
     args = parser.parse_args()
 
-    # 1. Определяем целевую папку (чтобы vision/train.py увидел данные)
-    # Target: research/vision/data
+    # Resolve target dataset directory
+    # Expected by research/vision/train.py
     base_dir = Path(__file__).resolve().parent.parent.parent
     target_data_dir = base_dir / 'research/vision/data'
 
-    logger.info(f'🎯 Target Dataset Directory: {target_data_dir}')
+    logger.info(f'Target Dataset Directory: {target_data_dir}')
 
-    # 2. Распаковка
+    # Extract dataset
     source_path = Path(args.source)
     if not target_data_dir.exists() or not (target_data_dir / 'train').exists():
         target_data_dir.mkdir(parents=True, exist_ok=True)
         if source_path.suffix == '.zip' and source_path.exists():
             extract_archive(source_path, target_data_dir)
         else:
-            logger.error(f"❌ Archive '{source_path}' not found.")
+            logger.error(f"Archive '{source_path}' not found.")
             return
     else:
-        logger.info('📂 Data exists. Proceeding to split verification.')
+        logger.info('Data exists. Proceeding to split verification.')
 
-    # 3. Запуск логики коллеги (Config + Dataloader)
-    logger.info('🔧 Initializing Team Loader logic...')
+    # Initialize loader configuration
+    logger.info('Initializing Team Loader logic...')
 
-    # Создаем конфиг из файла коллеги
+    # Initialize loader configuration
     cfg = Config(
         root_dir=str(target_data_dir),
         val_ratio=args.val_ratio,
         batch_size=args.bs,
-        # Важно: включаем grayscale, если так написано в конфиге
         grayscale=True,
     )
 
     try:
-        # Используем build_dataloaders из dataloader.py
-        # Эта функция сама создаст val-split, если его нет
+        # Validation split will be created automatically if missing
         train_loader, val_loader, test_loader = build_dataloaders(cfg)
 
-        logger.info('✨ Team Loader verification passed!')
+        logger.info('Team Loader verification passed!')
         logger.info(f'   Train Batches: {len(train_loader)}')
         logger.info(f'   Val Batches:   {len(val_loader)}')
         logger.info(f'   Test Batches:  {len(test_loader)}')
 
-        logger.info("\n✅ Data is ready for 'research/vision/train.py'")
+        logger.info("\nData is ready for 'research/vision/train.py'")
 
     except Exception as e:
-        logger.error(f'❌ Loader check failed: {e}')
+        logger.error(f'Loader check failed: {e}')
         import traceback
 
         traceback.print_exc()
