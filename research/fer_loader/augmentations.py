@@ -4,6 +4,19 @@ from albumentations.pytorch import ToTensorV2
 
 
 def get_train_augmentations(image_size: tuple[int, int]) -> A.Compose:
+    """
+    Augmentation pipeline for training emotion recognition models.
+
+    Designed to simulate real-world webcam conditions while preserving
+    facial expression semantics.
+
+    Includes:
+    - small head rotations
+    - horizontal flips
+    - slight affine distortions (scale, shift, shear)
+    - illumination changes
+    - sensor-like noise and mild blur
+    """
     h, w = image_size
     return A.Compose(
         [
@@ -40,5 +53,11 @@ def get_train_augmentations(image_size: tuple[int, int]) -> A.Compose:
 
 
 def get_val_augmentations(image_size: tuple[int, int]) -> A.Compose:
+    """
+    Validation preprocessing pipeline.
+
+    Applies only resizing and tensor conversion without any stochastic
+    augmentations to ensure deterministic evaluation.
+    """
     h, w = image_size
     return A.Compose([A.Resize(h, w), ToTensorV2()])
