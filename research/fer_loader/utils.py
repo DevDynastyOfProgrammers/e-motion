@@ -7,6 +7,9 @@ import torch
 
 
 def set_seed(seed: int) -> None:
+    """
+    Set random seed for Python, NumPy and PyTorch (CPU and CUDA).
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -15,6 +18,10 @@ def set_seed(seed: int) -> None:
 
 
 def ensure_dir(path: str, remove_if_exists: bool = False) -> None:
+    """
+    Create directory if it does not exist.
+    Optionally removes existing directory before creation.
+    """
     if os.path.exists(path):
         if remove_if_exists:
             shutil.rmtree(path)
