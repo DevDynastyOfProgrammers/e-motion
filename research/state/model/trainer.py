@@ -20,7 +20,7 @@ from research.state.model.analyzer import AdvancedPresetAnalyzer as ResearchAnal
 @dataclass
 class LocalDataConfig:
     data_path: str = 'research/state/data/emotional_balance_dataset.csv'
-    prototypes_save_path: str = 'research/state/data/models/trainer_result_model.npy'
+    prototypes_save_path: str = 'research/state/data/models/director.npy'
 
 
 data_config = LocalDataConfig()
