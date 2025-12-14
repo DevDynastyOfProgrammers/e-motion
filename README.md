@@ -20,7 +20,7 @@
 #### Шаг 3: Веса модели зрения (Vision Model)
 
 Веса моделей в репозитории не хранятся, поэтому файл `emotion_model.pth` находится в `.gitignore`.
-*   **Действие:** Скопируй этот файл вручную с флешки/облака/старого ноутбука в папку `assets/models/` (имя обязательно `emotion_model.pth`).
+*   **Действие:** Скопируй [этот](https://drive.google.com/file/d/1buFuHepfhPaJNBAPw6NIKkpbPjzBaxr8/view?usp=sharing) файл вручную с флешки/облака/старого ноутбука в папку `assets/models/` (имя обязательно `emotion_model.pth`).
 
 #### Шаг 4: Генерация данных для "Игрового Директора" (State Model)
 
