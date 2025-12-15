@@ -33,7 +33,6 @@ Communication between these layers happens via a thread-safe `queue.Queue`.
 *The diagram below illustrates how the Core Engine is isolated from the ML Modules and how data flows through the queue.*
 
 ![Component Diagram](docs/component_diagram.png)
-*(Please insert the Component Diagram here)*
 
 ---
 
@@ -62,7 +61,6 @@ This layer connects the game to the neural networks.
 *Illustrates the ECS structure, system hierarchy, and ML integration classes.*
 
 ![Class Diagram](docs/class_diagram.png)
-*(Please insert the Class Diagram here)*
 
 #### 📁 Layer 3: Difficulty Management (`core/director.py`)
 The "Brain" of the adaptive system.
